@@ -5,6 +5,7 @@ set wrap
 set linebreak
 set showcmd
 set noshowmode
+set wildmenu
 
 " color "
 syntax on
@@ -61,12 +62,12 @@ if has("win32")
 else
 	set fileencoding=utf-8
 endif
-" 解決選單亂碼 "
+
+" fix menu unicode encoding "
 source $VIMRUNTIME/delmenu.vim
 source $VIMRUNTIME/menu.vim
-" 解決consle輸出亂碼 "
+" fix consle unicode encdogin "
 language messages zh_TW.utf-8
-
 
 " plugins "
 call plug#begin('~/.vim/plugged')
