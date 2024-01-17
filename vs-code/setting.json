@@ -1,0 +1,224 @@
+{
+  "[html]": {
+    "editor.defaultFormatter": "rvest.vs-code-prettier-eslint"
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[javascriptreact]": {
+    "editor.defaultFormatter": "rvest.vs-code-prettier-eslint"
+  },
+  "[jsonc]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[markdown]": {
+    "editor.defaultFormatter": "yzhang.markdown-all-in-one"
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[vue]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "audioCues.diffLineDeleted": "off",
+  "audioCues.diffLineInserted": "off",
+  "audioCues.diffLineModified": "off",
+  "audioCues.lineHasError": "off",
+  "audioCues.lineHasFoldedArea": "off",
+  "bracketPairColorizer.depreciation-notice": false,
+  "console-ninja.featureSet": "Pro",
+  "console-ninja.predictiveLoggingEnabled": false,
+  "cSpell.userWords": [
+    "Acan",
+    "Airtable",
+    "autogrow",
+    "Benben",
+    "Classcipe",
+    "composables",
+    "heapify",
+    "Hexo",
+    "Keychron",
+    "Leetcode",
+    "Lidemy",
+    "macbook",
+    "mentees",
+    "middlewares",
+    "MVVM",
+    "neovim",
+    "nullptr",
+    "nums",
+    "Pinia",
+    "pnpm",
+    "resave",
+    "todos",
+    "TOEIC",
+    "Udemy",
+    "Ving",
+    "Vuex"
+  ],
+  "diffEditor.ignoreTrimWhitespace": false,
+  "discord-chat.token": "NjkxMjM3MzM0NDYwNTMwNjk4.YXbEDw.CZsoeJASmmoQL1-4j59zpGKYrnc",
+  "editor.accessibilitySupport": "off",
+  "editor.cursorBlinking": "smooth",
+  "editor.cursorSmoothCaretAnimation": "on",
+  "editor.cursorStyle": "line",
+  "editor.cursorSurroundingLines": 3,
+  "editor.fontFamily": "OperatorMono Nerd Font, Operator Mono, monospace, Cousine Nerd Font, Consolas, 'Courier New'",
+  "editor.formatOnSave": true,
+  "editor.guides.bracketPairs": true,
+  "editor.insertSpaces": true,
+  "editor.lineNumbers": "relative",
+  "editor.linkedEditing": true,
+  "editor.renderControlCharacters": true,
+  "editor.renderWhitespace": "all",
+  "editor.smoothScrolling": true,
+  "editor.stickyScroll.enabled": true,
+  "editor.suggest.insertMode": "replace",
+  "editor.tabSize": 2,
+  "editor.codeActionsOnSave": {
+    "source.addMissingImports": "explicit",
+    "source.organizeImports": "explicit"
+  },
+  "editor.trimAutoWhitespace": false,
+  "editor.wordSeparators": "/\\()\"':,.;<>~!@#$%^&*|+=[]{}`?-",
+  "everforest.darkCursor": "aqua",
+  "everforest.darkSelection": "red",
+  "everforest.diagnosticTextBackgroundOpacity": "37.5%",
+  "everforest.highContrast": true,
+  "everforest.italicKeywords": true,
+  "explorer.confirmDelete": false,
+  "explorer.confirmDragAndDrop": false,
+  "extension.autoUpdate": "onlyEnabledExtensions",
+  "extensions.experimental.affinity": {
+    "vscodevim.vim": 1
+  },
+  "extensions.ignoreRecommendations": true,
+  "files.associations": {
+    "*.js": "javascript",
+    "*.jsx": "javascriptreact"
+  },
+  "files.autoSave": "onFocusChange",
+  "files.trimTrailingWhitespace": true,
+  "git.autofetch": true,
+  "githubPullRequests.pullBranch": "never",
+  "i18n-ally.ignoredLocales": [],
+  "indentRainbow.indicatorStyle": "light",
+  "javascript.updateImportsOnFileMove.enabled": "always",
+  "liveServer.settings.donotShowInfoMsg": true,
+  "liveshare.accessibility.soundsEnabled": false,
+  "markdown.copyFiles.destination": {
+    "/docs/**/*": "images/${documentBaseName}/"
+  },
+  "markdownlint.config": {
+    "MD033": false
+  },
+  "powermode.enabled": true,
+  "powermode.shake.enabled": false,
+  "prettier.jsxSingleQuote": true,
+  "prettier.printWidth": 160,
+  "prettier.semi": false,
+  "prettier.vueIndentScriptAndStyle": true,
+  "quokka.automaticRestart": true,
+  "security.workspace.trust.untrustedFiles": "newWindow",
+  "sortJSON.orderOverride": ["name", "version", "description"],
+  "sortJSON.orderUnderride": ["dependencies", "devDependencies"],
+  "symbols.hidesExplorerArrows": false,
+  "terminal.external.osxExec": "Warp.app",
+  "terminal.integrated.env.osx": {},
+  "terminal.integrated.fontFamily": "Hack Nerd Font, Droid Sans Mono For Powerline, dans, monospace",
+  "terminal.integrated.fontSize": 12,
+  "terminal.integrated.gpuAcceleration": "off",
+  "typescript.updateImportsOnFileMove.enabled": "always",
+  "typescript.validate.enable": true,
+  "vim.camelCaseMotion.enable": true,
+  "vim.cursorStylePerMode.insert": "line",
+  "vim.cursorStylePerMode.normal": "block",
+  "vim.cursorStylePerMode.replace": "underline",
+  "vim.cursorStylePerMode.visual": "block-outline",
+  "vim.easymotion": true,
+  "vim.enableNeovim": true,
+  "vim.foldfix": true,
+  "vim.handleKeys": {
+    "<C-d>": true,
+    "<C-n>": false,
+    "<C-s>": false,
+    "<C-z>": false
+  },
+  "vim.hlsearch": true,
+  "vim.incsearch": true,
+  "vim.leader": "<space>",
+  "vim.matchpairs": "(:),{:},[:],<:>",
+  "vim.neovimConfigPath": "~/.config/nvim/init.lua",
+  "vim.neovimPath": "/usr/bin/nvim",
+  "vim.neovimUseConfigFile": true,
+  "vim.normalModeKeyBindingsNonRecursive": [
+    {
+      "after": ["d", "d"],
+      "before": ["<leader>", "d"]
+    },
+    {
+      "after": ["<C-w>", "h"],
+      "before": ["[", "t"]
+    },
+    {
+      "after": ["<C-w>", "l"],
+      "before": ["]", "t"]
+    },
+    {
+      "after": ["g", "T"],
+      "before": ["[", "b"]
+    },
+    {
+      "after": ["g", "t"],
+      "before": ["]", "b"]
+    },
+    {
+      "after": ["<leader>", "<leader>", "/"],
+      "before": ["<leader>", "s"]
+    },
+    {
+      "before": ["<leader>", "n"],
+      "commands": [":nohl"]
+    },
+    {
+      "before": ["K"],
+      "commands": ["lineBreakInsert"],
+      "silent": true
+    },
+    {
+      "before": ["[", "d"],
+      "commands": ["editor.action.marker.prev"]
+    },
+    {
+      "before": ["]", "d"],
+      "commands": ["editor.action.marker.next"]
+    },
+    {
+      "before": ["<leader>", "i"],
+      "commands": ["extension.toggleBool"]
+    }
+  ],
+  "vim.sneak": true,
+  "vscode_vibrancy.opacity": 0,
+  "vscode_vibrancy.refreshInterval": 100,
+  "vscode_vibrancy.theme": "Catppuccin Mocha",
+  "vscode_vibrancy.type": "popover",
+  "vscode-neovim.neovimInitVimPaths.linux": "/usr/local/bin/nvim",
+  "vsicons.dontShowNewVersionMessage": true,
+  "vue.codeActions.savingTimeLimit": 2000,
+  "window.titleBarStyle": "custom",
+  "window.zoomLevel": 1,
+  "workbench.colorTheme": "Catppuccin Mocha",
+  "workbench.editor.tabSizing": "fixed",
+  "workbench.editor.tabSizingFixedMaxWidth": 160,
+  "workbench.editorAssociations": {
+    "*.pptx": "default"
+  },
+  "workbench.iconTheme": "catppuccin-mocha",
+  "workbench.list.smoothScrolling": true,
+  "workbench.preferredDarkColorTheme": "One Dark Pro",
+  "workbench.productIconTheme": "bongocat"
+}
