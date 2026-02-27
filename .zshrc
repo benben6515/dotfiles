@@ -8,7 +8,7 @@ export ZSH="$HOME/.oh-my-zsh"
 # load a random theme each time Oh My Zsh is loaded, in which case,
 # to know which specific one was loaded, run: echo $RANDOM_THEME
 # See https://github.com/ohmyzsh/ohmyzsh/wiki/Themes
-ZSH_THEME="agnoster"
+# ZSH_THEME="agnoster"
 
 # Set list of themes to pick from when loading at random
 # Setting this variable when ZSH_THEME=random will cause zsh to load
@@ -112,7 +112,6 @@ export LSCOLORS="ExGxBxDxCxEgEdxbxgxcxd"
 alias zshconfig="mate ~/.zshrc"
 alias reload="source ~./zshrc"
 alias ohmyzsh="mate ~/.oh-my-zsh"
-alias ll="ls -altr"
 alias gco='git checkout'
 alias gs='git status'
 alias ga='git add'
@@ -121,8 +120,15 @@ alias gp='git push'
 alias ..='cd ..'
 alias ...='cd ../..'
 alias c='clear'
-alias grep='grep --color=auto'
-alias fgrep='fgrep --color=auto'
-alias egrep='egrep --color=auto'
+alias grep='rg'
+alias ls='eza --icons'
+alias ll="eza -al --icons"
+alias find='fd'
+alias cat='bat'
+alias top='btop'
+alias lg='lazygit'
 
 mkcd() { mkdir -p "$1" && cd "$1" }
+
+eval "$(starship init zsh)"
+eval "$(zoxide init zsh)"
