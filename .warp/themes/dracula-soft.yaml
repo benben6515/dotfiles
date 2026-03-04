@@ -1,0 +1,25 @@
+name: dracula-soft
+accent: '#d6acff'
+cursor: '#efefef'
+background: '#3a3d4b'
+details: darker
+foreground: '#f8f8f2'
+terminal_colors:
+  bright:
+    black: '#6e7081'
+    blue: '#e6cfff'
+    cyan: '#b8f2ff'
+    green: '#7bffa0'
+    magenta: '#ffb3e6'
+    red: '#ff8080'
+    white: '#ffffff'
+    yellow: '#f8ffcc'
+  normal:
+    black: '#3a3d4b'
+    blue: '#d6acff'
+    cyan: '#b8f2ff'
+    green: '#7bffa0'
+    magenta: '#ffb3e6'
+    red: '#ff8080'
+    white: '#e0e0e0'
+    yellow: '#f8ffcc'

@@ -1,0 +1,25 @@
+name: opencode
+accent: '#6366f1'
+cursor: '#efefef'
+background: '#0f0f0f'
+foreground: '#e5e5e5'
+details: darker
+terminal_colors:
+  bright:
+    black: '#3f3f3f'
+    blue: '#a5c4ff'
+    cyan: '#7ee0e0'
+    green: '#b4fa72'
+    magenta: '#ff9ff3'
+    red: '#ff8a7a'
+    white: '#ffffff'
+    yellow: '#ffdd72'
+  normal:
+    black: '#1f1f1f'
+    blue: '#6c9ff5'
+    cyan: '#5ecaca'
+    green: '#92d640'
+    magenta: '#e77cf5'
+    red: '#f56b6b'
+    white: '#e5e5e5'
+    yellow: '#f5c842'
