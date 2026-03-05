@@ -3,24 +3,34 @@ hs.hotkey.bind({ "cmd", "alt", "ctrl" }, "W", function()
   hs.alert.show("Hello World!")
 end)
 
--- fix the issue: opencode in warp terminal doesn't work
-local keyMap = hs.eventtap.new({ hs.eventtap.event.types.keyDown }, function(event)
-  local keycode = event:getKeyCode()
-  local flags = event:getFlags()
+-- Fix the issue: opencode in warp terminal doesn't work
+-- Remap "Shift + Enter" to "Ctrl + j" when Warp terminal is focused
+local warpFilter = hs.window.filter.new({ "Warp", "dev.warp.Warp-Stable" })
+local warpEventTap = nil
 
-  if keycode == 36 and flags.shift then
-    local win = hs.window.focusedWindow()
-    if win then
-      local title = win:title()
-      local app = win:application():name()
+warpFilter:subscribe(hs.window.filter.windowFocused, function()
+  if warpEventTap then
+    warpEventTap:stop()
+  end
 
-      if app:lower() == "warp" or (title and title:lower():find("warp")) then
-        hs.eventtap.event.newKeyEvent({ "ctrl" }, "j", true):post()
-        hs.eventtap.event.newKeyEvent({ "ctrl" }, "j", false):post()
+  warpEventTap = hs.eventtap
+    .new({ hs.eventtap.event.types.keyDown }, function(event)
+      local keyCode = event:getKeyCode()
+      local mods = event:getFlags()
+
+      -- Check for Shift + Enter (Enter key code is 36)
+      if keyCode == 36 and mods.shift then
+        hs.eventtap.keyStroke({ "ctrl" }, "j", 0)
         return true
       end
-    end
-  end
-  return false
+      return false
+    end)
+    :start()
 end)
-keyMap:start()
+
+warpFilter:subscribe(hs.window.filter.windowUnfocused, function()
+  if warpEventTap then
+    warpEventTap:stop()
+    warpEventTap = nil
+  end
+end)
