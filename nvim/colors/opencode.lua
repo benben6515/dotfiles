@@ -14,17 +14,18 @@ local colors = {
 
   -- Blues/Cyans (accent colors)
   purple0 = "#0d4f99", -- Deep neon blue
-  purple1 = "#0088ff", -- Vibrant neon blue
-  purple2 = "#00d4ff", -- Bright cyan/neon blue
-  purple3 = "#00ffff", -- Neon cyan
-  purple4 = "#0affef", -- Electric teal
-  purple5 = "#5fffdf", -- Light electric teal
+  purple1 = "#5B48F9", -- Vibrant neon blue
+  purple2 = "#E1FAA0", -- Bright cyan/neon blue
+  purple3 = "#22cfcf", -- Neon cyan
+  purple4 = "#efaaef", -- Electric teal
+  purple5 = "#77efcf", -- Light electric teal
 
   -- Text colors
   fg0 = "#f0f0ff", -- Main text (brighter)
   fg1 = "#d0e0e0", -- Dimmed text (brighter)
-  fg2 = "#a0c0c0", -- Comments (brighter for readability)
-  fg3 = "#60a0a0", -- Inactive text
+  fg2 = "#80bea0", -- Comments (brighter for readability)
+  fg3 = "#8090a0", -- Inactive text
+  fg4 = "#60a0a0", -- Inactive line
 
   -- Syntax colors
   red = "#f38ba8", -- Errors, keywords
@@ -32,14 +33,14 @@ local colors = {
   yellow = "#f9e2af", -- Warnings, types
   green = "#a6e3a1", -- Strings, success
   cyan = "#89dceb", -- Functions, methods
-  blue = "#6baaff", -- Variables, identifiers (brighter blue)
-  teal = "#7fe0d0", -- Properties, fields (brighter)
+  blue = "#bba8f9", -- Variables, identifiers (brighter blue)
+  teal = "#dfaa8f", -- Properties, fields (brighter)
 
   -- UI colors
   border = "#3d3d50",
   cursor = "#efefef", -- Neon cyan cursor
   accent = "#00c4cc", -- Bright cyan accent
-  highlight = "#0a3d6e", -- Neon blue selection
+  highlight = "#4a6d8f", -- Neon blue selection
 }
 
 -- Terminal colors
@@ -169,7 +170,7 @@ local highlights = {
   Underlined = { fg = colors.cyan, underline = true },
   Ignore = { fg = colors.fg3 },
   Error = { fg = colors.red, bg = colors.bg2 },
-  NonText = { fg = colors.fg3 },
+  NonText = { fg = colors.fg4 }, -- inactive file name
   Whitespace = { fg = colors.bg2 },
 
   -- Diff
