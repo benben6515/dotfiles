@@ -1,46 +1,46 @@
--- OpenCode Theme - A dark theme with purple gradient accents
--- Inspired by modern code editors with a focus on readability
+-- OpenCode Theme - dark background with neon cyan / pink / lime accents
+-- Retro terminal x neon cyberpunk, tuned for long reading sessions
 
 local M = {}
 
 -- Color palette
 local colors = {
-  -- Backgrounds (darkest to lightest)
-  bg0 = "#0a0a0f", -- Main background
-  bg1 = "#12121a", -- Darker background (sidebar, etc.)
-  bg2 = "#1a1a25", -- Selection background
-  bg3 = "#252533", -- Lighter background (floats)
-  bg4 = "#2d2d3d", -- Active line background
+  -- Backgrounds (darkest to lightest), blue-violet tinted
+  bg0 = "#080812", -- Main background
+  bg1 = "#0e0e1a", -- Sidebar background
+  bg2 = "#151524", -- Selection background
+  bg3 = "#1d1d2e", -- Float background
+  bg4 = "#262638", -- Active line background
 
-  -- Blues/Cyans (accent colors)
-  purple0 = "#0d4f99", -- Deep neon blue
-  purple1 = "#5B48F9", -- Vibrant neon blue
-  purple2 = "#E1FAA0", -- Bright cyan/neon blue
-  purple3 = "#22cfcf", -- Neon cyan
-  purple4 = "#efaaef", -- Electric teal
-  purple5 = "#77efcf", -- Light electric teal
+  -- Accent hierarchy: neon (primary) > pink (interactive) > lime (status);
+  -- violet/deep_blue/mint extend the markdown heading gradient
+  neon = "#22cfcf", -- Primary accent (neon cyan)
+  pink = "#efaaef", -- Interactive accent
+  lime = "#b7dba0", -- Status/success accent
+  violet = "#5B48F9", -- Vibrant blue-violet
+  deep_blue = "#0d4f99", -- Deep blue (darkest accent)
+  mint = "#77efcf", -- Light mint
 
   -- Text colors
-  fg0 = "#f0f0ff", -- Main text (brighter)
-  fg1 = "#d0e0e0", -- Dimmed text (brighter)
-  fg2 = "#80bea0", -- Comments (brighter for readability)
+  fg0 = "#f0f0ff", -- Main text
+  fg1 = "#d0e0e0", -- Dimmed text
+  fg2 = "#80bea0", -- Comments
   fg3 = "#8090a0", -- Inactive text
   fg4 = "#60a0a0", -- Inactive line
 
-  -- Syntax colors
+  -- Syntax colors (supporting cast, desaturated)
   red = "#f38ba8", -- Errors, keywords
-  orange = "#fab387", -- Numbers, constants
-  yellow = "#f9e2af", -- Warnings, types
+  orange = "#e8a878", -- Numbers, constants
+  yellow = "#e6d5a3", -- Warnings, types
   green = "#a6e3a1", -- Strings, success
   cyan = "#89dceb", -- Functions, methods
-  blue = "#bba8f9", -- Variables, identifiers (brighter blue)
-  teal = "#dfaa8f", -- Properties, fields (brighter)
+  lavender = "#bba8f9", -- Variables, identifiers
+  peach = "#cfa890", -- Properties, fields
 
   -- UI colors
-  border = "#3d3d50",
-  cursor = "#efefef", -- Neon cyan cursor
-  accent = "#00c4cc", -- Bright cyan accent
-  highlight = "#4a6d8f", -- Neon blue selection
+  border = "#3d3d50", -- Window borders
+  cursor = "#efefef", -- Cursor
+  highlight = "#4a6d8f", -- Selection highlight
 }
 
 -- Terminal colors
@@ -49,16 +49,16 @@ local terminal = {
   colors.red, -- Red
   colors.green, -- Green
   colors.yellow, -- Yellow
-  colors.blue, -- Blue
-  colors.purple2, -- Magenta
+  colors.lavender, -- Blue slot (lavender)
+  colors.pink, -- Magenta
   colors.cyan, -- Cyan
   colors.fg1, -- White
   colors.bg3, -- Bright Black
   colors.red, -- Bright Red
   colors.green, -- Bright Green
   colors.yellow, -- Bright Yellow
-  colors.blue, -- Bright Blue
-  colors.purple3, -- Bright Magenta
+  colors.lavender, -- Bright Blue slot (lavender)
+  colors.pink, -- Bright Magenta
   colors.cyan, -- Bright Cyan
   colors.fg0, -- Bright White
 }
@@ -73,7 +73,7 @@ local highlights = {
   -- Cursor
   Cursor = { fg = colors.bg0, bg = colors.cursor },
   CursorLine = { bg = colors.bg4 },
-  CursorLineNr = { fg = colors.purple3, bg = colors.bg1 },
+  CursorLineNr = { fg = colors.neon, bg = colors.bg1 },
   CursorColumn = { bg = colors.bg2 },
   LineNr = { fg = colors.fg3, bg = colors.bg1 },
 
@@ -82,15 +82,15 @@ local highlights = {
   VisualNOS = { bg = colors.highlight },
 
   -- Search
-  Search = { fg = colors.bg0, bg = colors.purple3 },
-  IncSearch = { fg = colors.bg0, bg = colors.purple4 },
+  Search = { fg = colors.bg0, bg = colors.neon },
+  IncSearch = { fg = colors.bg0, bg = colors.pink },
   Substitute = { fg = colors.bg0, bg = colors.orange },
 
   -- Popup menu
   Pmenu = { fg = colors.fg0, bg = colors.bg3 },
-  PmenuSel = { fg = colors.bg0, bg = colors.purple2 },
+  PmenuSel = { fg = colors.bg0, bg = colors.lime },
   PmenuSbar = { bg = colors.bg2 },
-  PmenuThumb = { bg = colors.purple1 },
+  PmenuThumb = { bg = colors.violet },
 
   -- Statusline
   StatusLine = { fg = colors.fg0, bg = colors.bg3 },
@@ -99,7 +99,7 @@ local highlights = {
   -- Tabline
   TabLine = { fg = colors.fg2, bg = colors.bg1 },
   TabLineFill = { bg = colors.bg0 },
-  TabLineSel = { fg = colors.purple3, bg = colors.bg2, bold = true },
+  TabLineSel = { fg = colors.neon, bg = colors.bg2, bold = true },
 
   -- Window
   VertSplit = { fg = colors.border, bg = colors.bg0 },
@@ -111,14 +111,14 @@ local highlights = {
   SignColumn = { fg = colors.fg3, bg = colors.bg1 },
 
   -- Messages
-  ModeMsg = { fg = colors.purple2 },
-  MoreMsg = { fg = colors.purple2 },
+  ModeMsg = { fg = colors.neon },
+  MoreMsg = { fg = colors.neon },
   WarningMsg = { fg = colors.yellow },
   ErrorMsg = { fg = colors.red },
 
   -- Comments
   Comment = { fg = colors.fg2, italic = true },
-  SpecialComment = { fg = colors.purple2, italic = true },
+  SpecialComment = { fg = colors.lime, italic = true },
   Todo = { fg = colors.yellow, bg = colors.bg2, bold = true },
 
   -- Constants
@@ -130,43 +130,43 @@ local highlights = {
   Float = { fg = colors.orange },
 
   -- Identifiers
-  Identifier = { fg = colors.blue },
+  Identifier = { fg = colors.lavender },
   Function = { fg = colors.cyan },
   Method = { fg = colors.cyan },
-  Property = { fg = colors.teal },
-  Field = { fg = colors.teal },
+  Property = { fg = colors.peach },
+  Field = { fg = colors.peach },
 
   -- Statements
-  Statement = { fg = colors.purple3 },
-  Conditional = { fg = colors.purple3 },
-  Repeat = { fg = colors.purple3 },
-  Label = { fg = colors.purple2 },
+  Statement = { fg = colors.neon },
+  Conditional = { fg = colors.neon },
+  Repeat = { fg = colors.neon },
+  Label = { fg = colors.lime },
   Operator = { fg = colors.fg0 },
-  Keyword = { fg = colors.purple3 },
+  Keyword = { fg = colors.neon },
   Exception = { fg = colors.red },
 
   -- Preprocessor
-  PreProc = { fg = colors.purple2 },
-  Include = { fg = colors.purple2 },
-  Define = { fg = colors.purple1 },
-  Macro = { fg = colors.purple1 },
-  PreCondit = { fg = colors.purple2 },
+  PreProc = { fg = colors.lime },
+  Include = { fg = colors.lime },
+  Define = { fg = colors.violet },
+  Macro = { fg = colors.violet },
+  PreCondit = { fg = colors.lime },
 
   -- Types
   Type = { fg = colors.yellow },
-  StorageClass = { fg = colors.purple2 },
+  StorageClass = { fg = colors.lime },
   Structure = { fg = colors.yellow },
   Typedef = { fg = colors.yellow },
 
   -- Special
-  Special = { fg = colors.purple4 },
+  Special = { fg = colors.pink },
   SpecialChar = { fg = colors.orange },
   Tag = { fg = colors.cyan },
   Delimiter = { fg = colors.fg1 },
   SpecialKey = { fg = colors.fg3 },
 
   -- Text
-  Title = { fg = colors.purple3, bold = true },
+  Title = { fg = colors.neon, bold = true },
   Underlined = { fg = colors.cyan, underline = true },
   Ignore = { fg = colors.fg3 },
   Error = { fg = colors.red, bg = colors.bg2 },
@@ -180,78 +180,78 @@ local highlights = {
   DiffText = { fg = colors.cyan, bg = colors.bg3 },
 
   -- Git
-  gitcommitBranch = { fg = colors.purple3, bold = true },
+  gitcommitBranch = { fg = colors.fg3 },
   gitcommitComment = { fg = colors.fg2 },
   gitcommitDiscardedFile = { fg = colors.red },
   gitcommitFile = { fg = colors.fg0 },
-  gitcommitHeader = { fg = colors.purple2 },
+  gitcommitHeader = { fg = colors.lime },
   gitcommitOnBranch = { fg = colors.fg1 },
   gitcommitSelectedFile = { fg = colors.green },
   gitcommitUnmergedFile = { fg = colors.yellow },
   gitcommitUntrackedFile = { fg = colors.cyan },
 
   -- Markdown
-  markdownHeadingDelimiter = { fg = colors.purple3, bold = true },
-  markdownHeadingRule = { fg = colors.purple2 },
+  markdownHeadingDelimiter = { fg = colors.neon, bold = true },
+  markdownHeadingRule = { fg = colors.lime },
   markdownLinkText = { fg = colors.cyan },
-  markdownUrl = { fg = colors.teal, underline = true },
+  markdownUrl = { fg = colors.peach, underline = true },
   markdownCode = { fg = colors.green },
   markdownCodeBlock = { fg = colors.green },
   markdownBlockquote = { fg = colors.fg2 },
-  markdownListMarker = { fg = colors.purple3 },
+  markdownListMarker = { fg = colors.neon },
 
   -- Treesitter
-  ["@variable"] = { fg = colors.blue },
-  ["@variable.builtin"] = { fg = colors.purple2 },
+  ["@variable"] = { fg = colors.lavender },
+  ["@variable.builtin"] = { fg = colors.lime },
   ["@variable.parameter"] = { fg = colors.cyan },
-  ["@variable.member"] = { fg = colors.teal },
+  ["@variable.member"] = { fg = colors.peach },
   ["@constant"] = { fg = colors.orange },
   ["@constant.builtin"] = { fg = colors.orange },
-  ["@constant.macro"] = { fg = colors.purple1 },
+  ["@constant.macro"] = { fg = colors.violet },
   ["@module"] = { fg = colors.yellow },
   ["@module.builtin"] = { fg = colors.yellow },
-  ["@label"] = { fg = colors.purple2 },
+  ["@label"] = { fg = colors.lime },
   ["@string"] = { fg = colors.green },
   ["@string.documentation"] = { fg = colors.fg1 },
-  ["@string.regexp"] = { fg = colors.teal },
+  ["@string.regexp"] = { fg = colors.peach },
   ["@string.escape"] = { fg = colors.orange },
-  ["@string.special"] = { fg = colors.purple3 },
+  ["@string.special"] = { fg = colors.neon },
   ["@character"] = { fg = colors.green },
-  ["@character.special"] = { fg = colors.purple3 },
+  ["@character.special"] = { fg = colors.neon },
   ["@boolean"] = { fg = colors.orange },
   ["@number"] = { fg = colors.orange },
   ["@number.float"] = { fg = colors.orange },
   ["@type"] = { fg = colors.yellow },
   ["@type.builtin"] = { fg = colors.yellow },
   ["@type.definition"] = { fg = colors.yellow },
-  ["@type.qualifier"] = { fg = colors.purple2 },
-  ["@attribute"] = { fg = colors.purple2 },
-  ["@property"] = { fg = colors.teal },
+  ["@type.qualifier"] = { fg = colors.lime },
+  ["@attribute"] = { fg = colors.lime },
+  ["@property"] = { fg = colors.peach },
   ["@function"] = { fg = colors.cyan },
   ["@function.builtin"] = { fg = colors.cyan },
   ["@function.call"] = { fg = colors.cyan },
-  ["@function.macro"] = { fg = colors.purple1 },
+  ["@function.macro"] = { fg = colors.violet },
   ["@function.method"] = { fg = colors.cyan },
   ["@function.method.call"] = { fg = colors.cyan },
   ["@constructor"] = { fg = colors.yellow },
   ["@operator"] = { fg = colors.fg0 },
-  ["@keyword"] = { fg = colors.purple3 },
-  ["@keyword.coroutine"] = { fg = colors.purple3 },
-  ["@keyword.function"] = { fg = colors.purple3 },
-  ["@keyword.operator"] = { fg = colors.purple2 },
-  ["@keyword.import"] = { fg = colors.purple2 },
-  ["@keyword.storage"] = { fg = colors.purple2 },
-  ["@keyword.repeat"] = { fg = colors.purple3 },
-  ["@keyword.return"] = { fg = colors.purple3 },
+  ["@keyword"] = { fg = colors.neon },
+  ["@keyword.coroutine"] = { fg = colors.neon },
+  ["@keyword.function"] = { fg = colors.neon },
+  ["@keyword.operator"] = { fg = colors.lime },
+  ["@keyword.import"] = { fg = colors.lime },
+  ["@keyword.storage"] = { fg = colors.lime },
+  ["@keyword.repeat"] = { fg = colors.neon },
+  ["@keyword.return"] = { fg = colors.neon },
   ["@keyword.debug"] = { fg = colors.red },
   ["@keyword.exception"] = { fg = colors.red },
-  ["@keyword.conditional"] = { fg = colors.purple3 },
-  ["@keyword.conditional.ternary"] = { fg = colors.purple2 },
-  ["@keyword.directive"] = { fg = colors.purple2 },
-  ["@keyword.directive.define"] = { fg = colors.purple1 },
+  ["@keyword.conditional"] = { fg = colors.neon },
+  ["@keyword.conditional.ternary"] = { fg = colors.lime },
+  ["@keyword.directive"] = { fg = colors.lime },
+  ["@keyword.directive.define"] = { fg = colors.violet },
   ["@punctuation.delimiter"] = { fg = colors.fg1 },
   ["@punctuation.bracket"] = { fg = colors.fg1 },
-  ["@punctuation.special"] = { fg = colors.purple3 },
+  ["@punctuation.special"] = { fg = colors.neon },
   ["@comment"] = { fg = colors.fg2, italic = true },
   ["@comment.documentation"] = { fg = colors.fg1, italic = true },
   ["@comment.error"] = { fg = colors.red, italic = true },
@@ -265,60 +265,60 @@ local highlights = {
   LspReferenceWrite = { bg = colors.highlight },
   LspCodeLens = { fg = colors.fg2 },
   LspCodeLensSeparator = { fg = colors.fg3 },
-  LspSignatureActiveParameter = { fg = colors.purple3, bold = true },
+  LspSignatureActiveParameter = { fg = colors.neon, bold = true },
 
   -- Diagnostics
   DiagnosticError = { fg = colors.red },
   DiagnosticWarn = { fg = colors.yellow },
-  DiagnosticInfo = { fg = colors.blue },
-  DiagnosticHint = { fg = colors.teal },
+  DiagnosticInfo = { fg = colors.lavender },
+  DiagnosticHint = { fg = colors.peach },
   DiagnosticVirtualTextError = { fg = colors.red, bg = colors.bg2 },
   DiagnosticVirtualTextWarn = { fg = colors.yellow, bg = colors.bg2 },
-  DiagnosticVirtualTextInfo = { fg = colors.blue, bg = colors.bg2 },
-  DiagnosticVirtualTextHint = { fg = colors.teal, bg = colors.bg2 },
+  DiagnosticVirtualTextInfo = { fg = colors.lavender, bg = colors.bg2 },
+  DiagnosticVirtualTextHint = { fg = colors.peach, bg = colors.bg2 },
   DiagnosticUnderlineError = { underline = true, sp = colors.red },
   DiagnosticUnderlineWarn = { underline = true, sp = colors.yellow },
-  DiagnosticUnderlineInfo = { underline = true, sp = colors.blue },
-  DiagnosticUnderlineHint = { underline = true, sp = colors.teal },
+  DiagnosticUnderlineInfo = { underline = true, sp = colors.lavender },
+  DiagnosticUnderlineHint = { underline = true, sp = colors.peach },
 
   -- LSP Saga
   LspFloatWinNormal = { bg = colors.bg3 },
   LspFloatWinBorder = { fg = colors.border },
-  LspSagaHoverBorder = { fg = colors.purple2 },
-  LspSagaSignatureHelpBorder = { fg = colors.purple2 },
-  LspSagaCodeActionBorder = { fg = colors.purple2 },
-  LspSagaDefPreviewBorder = { fg = colors.purple2 },
+  LspSagaHoverBorder = { fg = colors.lime },
+  LspSagaSignatureHelpBorder = { fg = colors.lime },
+  LspSagaCodeActionBorder = { fg = colors.lime },
+  LspSagaDefPreviewBorder = { fg = colors.lime },
   LspSagaAutoPreview = { fg = colors.fg1 },
-  LspSagaFinderSelection = { fg = colors.purple3 },
+  LspSagaFinderSelection = { fg = colors.neon },
   ReferencesCount = { fg = colors.orange },
   DefinitionCount = { fg = colors.orange },
-  DefinitionIcon = { fg = colors.blue },
+  DefinitionIcon = { fg = colors.lavender },
   TargetWord = { fg = colors.cyan },
 
   -- NvimTree
   NvimTreeNormal = { fg = colors.fg0, bg = colors.bg1 },
   NvimTreeNormalNC = { fg = colors.fg1, bg = colors.bg1 },
-  NvimTreeRootFolder = { fg = colors.purple3, bold = true },
-  NvimTreeFolderIcon = { fg = colors.purple2 },
-  NvimTreeFolderName = { fg = colors.blue, bold = true },
+  NvimTreeRootFolder = { fg = colors.neon, bold = true },
+  NvimTreeFolderIcon = { fg = colors.lime },
+  NvimTreeFolderName = { fg = colors.lavender, bold = true },
   NvimTreeEmptyFolderName = { fg = colors.fg2 },
-  NvimTreeOpenedFolderName = { fg = colors.purple3, bold = true },
+  NvimTreeOpenedFolderName = { fg = colors.neon, bold = true },
   NvimTreeGitDirty = { fg = colors.yellow },
   NvimTreeGitNew = { fg = colors.green },
   NvimTreeGitDeleted = { fg = colors.red },
   NvimTreeGitIgnored = { fg = colors.fg1 },
   NvimTreeSpecialFile = { fg = colors.cyan },
   NvimTreeImageFile = { fg = colors.orange },
-  NvimTreeWindowPicker = { fg = colors.purple4, bg = colors.bg3, bold = true },
+  NvimTreeWindowPicker = { fg = colors.pink, bg = colors.bg3, bold = true },
 
   -- NeoTree
   NeoTreeNormal = { fg = colors.fg0, bg = colors.bg1 },
   NeoTreeNormalNC = { fg = colors.fg1, bg = colors.bg1 },
-  NeoTreeRootName = { fg = colors.purple3, bold = true },
-  NeoTreeDirectoryName = { fg = colors.blue, bold = true },
-  NeoTreeDirectoryIcon = { fg = colors.purple2 },
+  NeoTreeRootName = { fg = colors.neon, bold = true },
+  NeoTreeDirectoryName = { fg = colors.lavender, bold = true },
+  NeoTreeDirectoryIcon = { fg = colors.lime },
   NeoTreeFileName = { fg = colors.fg0, bold = false },
-  NeoTreeFileNameOpened = { fg = colors.purple3, bold = true },
+  NeoTreeFileNameOpened = { fg = colors.neon, bold = true },
   NeoTreeGitModified = { fg = colors.yellow },
   NeoTreeGitAdded = { fg = colors.green },
   NeoTreeGitDeleted = { fg = colors.red },
@@ -329,17 +329,17 @@ local highlights = {
   NeoTreeGitConflict = { fg = colors.red, bold = true },
   NeoTreeCursorLine = { bg = colors.bg2 },
   NeoTreeIndentMarker = { fg = colors.bg3 },
-  NeoTreeExpander = { fg = colors.purple2 },
+  NeoTreeExpander = { fg = colors.lime },
   NeoTreeSymbolicLinkTarget = { fg = colors.cyan },
 
   -- BufferLine
   BufferLineTabClose = { fg = colors.red },
-  BufferLineBufferSelected = { fg = colors.purple3, bg = colors.bg0, bold = true },
+  BufferLineBufferSelected = { fg = colors.neon, bg = colors.bg0, bold = true },
   BufferLineBufferVisible = { fg = colors.fg1, bg = colors.bg2 },
   BufferLineFill = { bg = colors.bg1 },
   BufferLineBackground = { fg = colors.fg2, bg = colors.bg1 },
   BufferLineSeparator = { fg = colors.border },
-  BufferLineIndicatorSelected = { fg = colors.purple2 },
+  BufferLineIndicatorSelected = { fg = colors.lime },
   BufferLineModified = { fg = colors.yellow },
   BufferLineModifiedSelected = { fg = colors.yellow },
   BufferLineModifiedVisible = { fg = colors.yellow },
@@ -347,54 +347,54 @@ local highlights = {
   -- Telescope
   TelescopeNormal = { fg = colors.fg0, bg = colors.bg3 },
   TelescopeBorder = { fg = colors.border, bg = colors.bg3 },
-  TelescopeTitle = { fg = colors.purple3, bg = colors.bg2, bold = true },
+  TelescopeTitle = { fg = colors.neon, bg = colors.bg2, bold = true },
   TelescopePromptNormal = { fg = colors.fg0, bg = colors.bg2 },
-  TelescopePromptBorder = { fg = colors.purple2, bg = colors.bg2 },
-  TelescopePromptPrefix = { fg = colors.purple3 },
+  TelescopePromptBorder = { fg = colors.lime, bg = colors.bg2 },
+  TelescopePromptPrefix = { fg = colors.neon },
   TelescopePromptCounter = { fg = colors.fg2 },
-  TelescopeMatching = { fg = colors.purple4, bold = true },
-  TelescopeSelection = { fg = colors.bg0, bg = colors.purple2 },
-  TelescopeSelectionCaret = { fg = colors.purple3, bg = colors.purple2 },
-  TelescopeMultiSelection = { fg = colors.teal },
+  TelescopeMatching = { fg = colors.pink, bold = true },
+  TelescopeSelection = { fg = colors.bg0, bg = colors.lime },
+  TelescopeSelectionCaret = { fg = colors.neon, bg = colors.lime },
+  TelescopeMultiSelection = { fg = colors.peach },
   TelescopePreviewNormal = { fg = colors.fg0, bg = colors.bg0 },
   TelescopePreviewLine = { bg = colors.highlight },
-  TelescopePreviewMatch = { fg = colors.purple4, bold = true },
+  TelescopePreviewMatch = { fg = colors.pink, bold = true },
 
   -- Cmp
   CmpItemAbbr = { fg = colors.fg0 },
   CmpItemAbbrDeprecated = { fg = colors.fg2, strikethrough = true },
-  CmpItemAbbrMatch = { fg = colors.purple3, bold = true },
-  CmpItemAbbrMatchFuzzy = { fg = colors.purple2, bold = true },
+  CmpItemAbbrMatch = { fg = colors.neon, bold = true },
+  CmpItemAbbrMatchFuzzy = { fg = colors.lime, bold = true },
   CmpItemMenu = { fg = colors.fg2 },
   CmpItemKindText = { fg = colors.fg0 },
   CmpItemKindMethod = { fg = colors.cyan },
   CmpItemKindFunction = { fg = colors.cyan },
   CmpItemKindConstructor = { fg = colors.yellow },
-  CmpItemKindField = { fg = colors.teal },
-  CmpItemKindVariable = { fg = colors.blue },
+  CmpItemKindField = { fg = colors.peach },
+  CmpItemKindVariable = { fg = colors.lavender },
   CmpItemKindClass = { fg = colors.yellow },
   CmpItemKindInterface = { fg = colors.yellow },
-  CmpItemKindModule = { fg = colors.purple2 },
-  CmpItemKindProperty = { fg = colors.teal },
+  CmpItemKindModule = { fg = colors.lime },
+  CmpItemKindProperty = { fg = colors.peach },
   CmpItemKindUnit = { fg = colors.orange },
   CmpItemKindValue = { fg = colors.orange },
   CmpItemKindEnum = { fg = colors.yellow },
-  CmpItemKindKeyword = { fg = colors.purple3 },
+  CmpItemKindKeyword = { fg = colors.neon },
   CmpItemKindSnippet = { fg = colors.green },
-  CmpItemKindColor = { fg = colors.purple4 },
-  CmpItemKindFile = { fg = colors.blue },
+  CmpItemKindColor = { fg = colors.pink },
+  CmpItemKindFile = { fg = colors.lavender },
   CmpItemKindReference = { fg = colors.cyan },
-  CmpItemKindFolder = { fg = colors.purple2 },
+  CmpItemKindFolder = { fg = colors.lime },
   CmpItemKindEnumMember = { fg = colors.orange },
   CmpItemKindConstant = { fg = colors.orange },
   CmpItemKindStruct = { fg = colors.yellow },
-  CmpItemKindEvent = { fg = colors.purple3 },
+  CmpItemKindEvent = { fg = colors.neon },
   CmpItemKindOperator = { fg = colors.fg0 },
   CmpItemKindTypeParameter = { fg = colors.yellow },
 
   -- WhichKey
-  WhichKey = { fg = colors.purple3 },
-  WhichKeyGroup = { fg = colors.blue },
+  WhichKey = { fg = colors.neon },
+  WhichKeyGroup = { fg = colors.lavender },
   WhichKeyDesc = { fg = colors.fg0 },
   WhichKeySeperator = { fg = colors.fg2 },
   WhichKeySeparator = { fg = colors.fg2 },
@@ -412,66 +412,75 @@ local highlights = {
 
   -- Indent Blankline
   IndentBlanklineChar = { fg = colors.bg3 },
-  IndentBlanklineContextChar = { fg = colors.purple2 },
+  IndentBlanklineContextChar = { fg = colors.lime },
   IndentBlanklineSpaceChar = { fg = colors.bg2 },
   IndentBlanklineSpaceCharBlankline = { fg = colors.bg2 },
 
   -- Mini
-  MiniStatuslineModeNormal = { fg = colors.bg0, bg = colors.purple3, bold = true },
+  MiniStatuslineModeNormal = { fg = colors.bg0, bg = colors.neon, bold = true },
   MiniStatuslineModeInsert = { fg = colors.bg0, bg = colors.green, bold = true },
   MiniStatuslineModeVisual = { fg = colors.bg0, bg = colors.yellow, bold = true },
   MiniStatuslineModeReplace = { fg = colors.bg0, bg = colors.red, bold = true },
-  MiniStatuslineModeCommand = { fg = colors.bg0, bg = colors.blue, bold = true },
-  MiniStatuslineModeOther = { fg = colors.bg0, bg = colors.teal, bold = true },
+  MiniStatuslineModeCommand = { fg = colors.bg0, bg = colors.lavender, bold = true },
+  MiniStatuslineModeOther = { fg = colors.bg0, bg = colors.peach, bold = true },
   MiniStatuslineDevinfo = { fg = colors.fg0, bg = colors.bg3 },
   MiniStatuslineFilename = { fg = colors.fg1, bg = colors.bg2 },
   MiniStatuslineFileinfo = { fg = colors.fg0, bg = colors.bg3 },
   MiniStatuslineInactive = { fg = colors.fg3, bg = colors.bg1 },
 
-  -- Dashboard
-  DashboardHeader = { fg = colors.purple3 },
-  DashboardCenter = { fg = colors.purple2 },
+  -- Dashboard (dashboard.nvim)
+  DashboardHeader = { fg = colors.neon },
+  DashboardCenter = { fg = colors.lime },
   DashboardShortcut = { fg = colors.cyan },
   DashboardFooter = { fg = colors.fg2 },
 
+  -- Dashboard (snacks.dashboard - LazyVim default)
+  SnacksDashboardHeader = { fg = colors.neon },
+  SnacksDashboardDesc = { fg = colors.fg0 },
+  SnacksDashboardKey = { fg = colors.neon, bold = true },
+  SnacksDashboardIcon = { fg = colors.pink },
+  SnacksDashboardSpecial = { fg = colors.lime },
+  SnacksDashboardFooter = { fg = colors.fg2 },
+  SnacksDashboardGreeting = { fg = colors.pink, italic = true },
+
   -- Lazy
-  LazyH1 = { fg = colors.bg0, bg = colors.purple3, bold = true },
-  LazyH2 = { fg = colors.purple2, bold = true },
+  LazyH1 = { fg = colors.bg0, bg = colors.neon, bold = true },
+  LazyH2 = { fg = colors.lime, bold = true },
   LazyButton = { fg = colors.fg0, bg = colors.bg3 },
-  LazyButtonActive = { fg = colors.bg0, bg = colors.purple2 },
-  LazyReasonPlugin = { fg = colors.purple2 },
+  LazyButtonActive = { fg = colors.bg0, bg = colors.lime },
+  LazyReasonPlugin = { fg = colors.lime },
   LazyReasonStart = { fg = colors.green },
   LazySpecial = { fg = colors.yellow },
 
   -- Notify
   NotifyERRORBorder = { fg = colors.red },
   NotifyWARNBorder = { fg = colors.yellow },
-  NotifyINFOBorder = { fg = colors.blue },
+  NotifyINFOBorder = { fg = colors.lavender },
   NotifyDEBUGBorder = { fg = colors.fg3 },
-  NotifyTRACEBorder = { fg = colors.purple2 },
+  NotifyTRACEBorder = { fg = colors.lime },
   NotifyERRORIcon = { fg = colors.red },
   NotifyWARNIcon = { fg = colors.yellow },
-  NotifyINFOIcon = { fg = colors.blue },
+  NotifyINFOIcon = { fg = colors.lavender },
   NotifyDEBUGIcon = { fg = colors.fg3 },
-  NotifyTRACEIcon = { fg = colors.purple2 },
+  NotifyTRACEIcon = { fg = colors.lime },
   NotifyERRORTitle = { fg = colors.red },
   NotifyWARNTitle = { fg = colors.yellow },
-  NotifyINFOTitle = { fg = colors.blue },
+  NotifyINFOTitle = { fg = colors.lavender },
   NotifyDEBUGTitle = { fg = colors.fg3 },
-  NotifyTRACETitle = { fg = colors.purple2 },
+  NotifyTRACETitle = { fg = colors.lime },
 
   -- Render Markdown
-  RenderMarkdownH1 = { fg = colors.purple3, bold = true },
-  RenderMarkdownH2 = { fg = colors.purple2, bold = true },
-  RenderMarkdownH3 = { fg = colors.purple1, bold = true },
-  RenderMarkdownH4 = { fg = colors.purple0, bold = true },
-  RenderMarkdownH5 = { fg = colors.purple4, bold = true },
-  RenderMarkdownH6 = { fg = colors.purple5, bold = true },
+  RenderMarkdownH1 = { fg = colors.neon, bold = true },
+  RenderMarkdownH2 = { fg = colors.lime, bold = true },
+  RenderMarkdownH3 = { fg = colors.violet, bold = true },
+  RenderMarkdownH4 = { fg = colors.deep_blue, bold = true },
+  RenderMarkdownH5 = { fg = colors.pink, bold = true },
+  RenderMarkdownH6 = { fg = colors.mint, bold = true },
   RenderMarkdownCode = { fg = colors.green, bg = colors.bg2 },
-  RenderMarkdownBullet = { fg = colors.purple3 },
+  RenderMarkdownBullet = { fg = colors.neon },
   RenderMarkdownQuote = { fg = colors.fg2, italic = true },
   RenderMarkdownLink = { fg = colors.cyan, underline = true },
-  RenderMarkdownTableHead = { fg = colors.purple2 },
+  RenderMarkdownTableHead = { fg = colors.lime },
   RenderMarkdownTableRow = { fg = colors.fg1 },
 }
 
