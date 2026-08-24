@@ -41,6 +41,7 @@ local colors = {
   border = "#3d3d50", -- Window borders
   cursor = "#efefef", -- Cursor
   highlight = "#4a6d8f", -- Selection highlight
+  gray = "#6b6f95", -- Bright black (dim text in TUIs, muted violet-gray)
 }
 
 -- Terminal colors
@@ -53,7 +54,7 @@ local terminal = {
   colors.pink, -- Magenta
   colors.cyan, -- Cyan
   colors.fg1, -- White
-  colors.bg3, -- Bright Black
+  colors.gray, -- Bright Black (muted violet-gray)
   colors.red, -- Bright Red
   colors.green, -- Bright Green
   colors.yellow, -- Bright Yellow

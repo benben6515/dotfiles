@@ -1,5 +1,5 @@
--- Fixed UTC+8 clock, independent of the machine's timezone
-local function utc8_hour()
+-- Taiwan time (UTC+8), independent of the machine's timezone
+local function tw_hour()
   return os.date("!*t", os.time() + 8 * 3600).hour
 end
 
@@ -202,7 +202,7 @@ return {
           { header = header_logo, padding = 1 }, -- padding 1 (default header section uses 2)
           function()
             return {
-              { text = { greeting(utc8_hour()), hl = "SnacksDashboardGreeting" }, align = "center", padding = 1 },
+              { text = { greeting(tw_hour()), hl = "SnacksDashboardGreeting" }, align = "center", padding = 1 },
             }
           end,
           { section = "keys", gap = 1, padding = 1 },

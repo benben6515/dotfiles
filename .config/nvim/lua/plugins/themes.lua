@@ -1,13 +1,13 @@
 return {
   {
     dir = vim.fn.stdpath("config") .. "/lua/colors",
-    name = "opencode",
+    name = "benben",
     lazy = false,
     priority = 1000,
     config = function()
-      require("colors.opencode").load()
+      require("colors.benben").load()
       -- TODO: current theme
-      vim.cmd.colorscheme("opencode")
+      vim.cmd.colorscheme("benben")
       -- vim.cmd.colorscheme("everforest")
       -- vim.cmd.colorscheme("dracula-soft")
       -- vim.cmd.colorscheme("catppuccin")
