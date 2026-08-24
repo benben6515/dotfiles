@@ -498,7 +498,7 @@ function M.load()
   if vim.g.colors_name then
     vim.cmd("hi clear")
   end
-  vim.g.colors_name = "opencode"
+  vim.g.colors_name = "benben"
   vim.o.termguicolors = true
 
   -- Set terminal colors
@@ -535,7 +535,7 @@ end
 -- Setup function
 function M.setup()
   vim.api.nvim_create_autocmd("ColorSchemePre", {
-    pattern = "opencode",
+    pattern = "benben",
     callback = function()
       M.load()
     end,
