@@ -28,6 +28,16 @@ window-padding-y = 4
 macos-titlebar-style = transparent
 window-theme = dark
 
+# ── CRT shader (cool-retro-term style) ────────────────────────────
+# more: ~/.config/ghostty/shaders/ (crt, tft, retro-terminal, glitchy...)
+custom-shader-animation = always
+# custom-shader = ./shaders/bettercrt.glsl
+# custom-shader = ./shaders/bloom.glsl
+# custom-shader = ./shaders/glow-rgbsplit-twitchy.glsl
+# custom-shader = ./shaders/glitchy.glsl
+# custom-shader = ./shaders/starfield.glsl
+custom-shader = ./shaders/starfield-sparse.glsl
+
 # ── Panes ────────────────────────────────────────
 unfocused-split-opacity = 1.0
 focus-follows-mouse = true
