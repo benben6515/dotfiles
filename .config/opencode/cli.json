@@ -1,0 +1,49 @@
+{
+  "$schema": "https://opencode.ai/v2/cli.json",
+  "theme": {
+    "name": "benben",
+    "mode": "dark"
+  },
+  "keybinds": {
+    "leader": "ctrl+o",
+    "session.tab.next": "alt+]",
+    "session.tab.previous": "alt+["
+  },
+  "diffs": {
+    "wrap": "word"
+  },
+  "session": {
+    "sidebar": "auto",
+    "scrollbar": false,
+    "thinking": "hide",
+    "image_preview": true,
+    "new_location": "inherit",
+    "permissions": "autoaccept"
+  },
+  "animations": true,
+  "plugins": [
+    "./herdr-tui-session.js"
+  ],
+  "tabs": {
+    "layout": "horizontal",
+    "indicators": "status",
+    "enabled": true,
+    "scope": "cwd"
+  },
+  "terminal": {
+    "title": true,
+    "copy": "select"
+  },
+  "debug": {
+    "devtools": true
+  },
+  "scroll": {
+    "acceleration": true
+  },
+  "prompt": {
+    "image_preview": false
+  },
+  "leader": {
+    "timeout": 2500
+  }
+}
