@@ -1,0 +1,9 @@
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Documentation placeholders and example JWTs"
+regexes = [
+  '''^(YOUR_|ADMIN_)[A-Z_]+$''',
+  '''eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\.\.\.''',
+]
