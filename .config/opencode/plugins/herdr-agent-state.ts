@@ -1,0 +1,215 @@
+// installed by herdr
+// managed by herdr; reinstalling or updating the integration overwrites this file.
+// add custom hooks/plugins beside this file instead of editing it.
+// HERDR_INTEGRATION_ID=opencode
+// HERDR_INTEGRATION_VERSION=10
+// PORTED to OpenCode V2 plugin API (default export with id + setup;
+// chat.message → ctx.session.hook('prompt'), event → ctx.event.subscribe).
+// NOTE: a herdr integration update will overwrite this port with the V1
+// version until herdr ships V2 support.
+
+import net from "node:net"
+
+type AnyRecord = Record<string, any>
+
+const SOURCE = "herdr:opencode"
+const AGENT = "opencode"
+let reportSeq = Date.now() * 1000
+let requestChain: Promise<unknown> = Promise.resolve()
+let reportedRootSessionID: string | undefined
+
+// Track child sessions so their events cannot replace the pane's root session.
+// Their user prompts still project state without attaching the child session id.
+const childSessions = new Set<string>()
+const CHILD_EVENT_STATES = new Map<string, string>([
+  ["permission.asked", "blocked"],
+  ["question.asked", "blocked"],
+  ["permission.replied", "working"],
+  ["question.replied", "working"],
+  ["question.rejected", "working"],
+])
+
+function nextReportSeq(): number {
+  reportSeq += 1
+  return reportSeq
+}
+
+function sessionIDFromProperties(properties: AnyRecord | undefined | null): string | undefined {
+  return typeof properties?.sessionID === "string" && properties.sessionID
+    ? properties.sessionID
+    : undefined
+}
+
+const SESSION_STATE_BY_STATUS = new Map<string, string>([
+  ["idle", "idle"],
+  ["active", "working"],
+  ["busy", "working"],
+  ["pending", "working"],
+  ["retry", "working"],
+  ["running", "working"],
+  ["streaming", "working"],
+  ["working", "working"],
+])
+
+function stateFromSessionStatus(status: unknown): string | undefined {
+  const kind = typeof status === "string" ? status : (status as AnyRecord | undefined)?.type
+  return typeof kind === "string"
+    ? SESSION_STATE_BY_STATUS.get(kind.toLowerCase())
+    : undefined
+}
+
+function request(method: string, params: AnyRecord): Promise<void> {
+  const pending = requestChain.then(() => requestOnce(method, params))
+  requestChain = pending.catch(() => {})
+  return pending as Promise<void>
+}
+
+function requestOnce(method: string, params: AnyRecord): Promise<void> {
+  const paneId = process.env.HERDR_PANE_ID
+  const socketPath = process.env.HERDR_SOCKET_PATH
+
+  if (!paneId || !socketPath) {
+    return Promise.resolve()
+  }
+
+  const socketEndpoint =
+    process.platform === "win32" ? `\\\\.\\pipe\\${socketPath}` : socketPath
+
+  const requestId = `${SOURCE}:${Date.now()}:${Math.floor(Math.random() * 1_000_000)
+    .toString()
+    .padStart(6, "0")}`
+  const request = {
+    id: requestId,
+    method,
+    params: {
+      pane_id: paneId,
+      source: SOURCE,
+      agent: AGENT,
+      seq: nextReportSeq(),
+      ...params,
+    },
+  }
+
+  return new Promise((resolve) => {
+    const client = net.createConnection(socketEndpoint, () => {
+      client.write(`${JSON.stringify(request)}\n`)
+    })
+
+    const finish = () => {
+      client.destroy()
+      resolve()
+    }
+
+    client.setTimeout(500, finish)
+    client.on("data", finish)
+    client.on("error", finish)
+    client.on("end", finish)
+    client.on("close", resolve)
+  })
+}
+
+function reportSession(sessionID: string | undefined): Promise<void> {
+  if (!sessionID) {
+    return Promise.resolve()
+  }
+  return request("pane.report_agent_session", { agent_session_id: sessionID })
+}
+
+function reportState(state: string, sessionID?: string): Promise<void> {
+  const params: AnyRecord = { state }
+  if (sessionID) {
+    reportedRootSessionID = sessionID
+    params.agent_session_id = sessionID
+  }
+  return request("pane.report_agent", params)
+}
+
+export default {
+  id: "herdr-agent-state",
+  async setup(ctx: any) {
+    if (
+      process.env.HERDR_ENV !== "1" ||
+      !process.env.HERDR_SOCKET_PATH ||
+      !process.env.HERDR_PANE_ID
+    ) {
+      return
+    }
+
+    await ctx.session.hook("prompt", (event: AnyRecord | null | undefined) => {
+      const sessionID = event?.sessionID
+      if (sessionID && childSessions.has(sessionID)) {
+        return
+      }
+      return reportState("working", sessionID)
+    })
+
+    const controller = new AbortController()
+    void (async () => {
+      try {
+        for await (const event of ctx.event.subscribe({ signal: controller.signal })) {
+          await handleEvent(event as AnyRecord)
+        }
+      } catch (e) {}
+    })()
+    return () => controller.abort()
+    async function handleEvent(event: AnyRecord | null | undefined) {
+      const type = event?.type
+      const properties = (event?.properties ?? {}) as AnyRecord
+      const sessionID = sessionIDFromProperties(properties)
+
+      const info = properties.info
+      if (info?.id && info.parentID) {
+        childSessions.add(info.id)
+      }
+      if (sessionID && childSessions.has(sessionID)) {
+        const state = CHILD_EVENT_STATES.get(type)
+        if (state) {
+          await reportState(state)
+        }
+        return
+      }
+
+      switch (type) {
+        case "session.created":
+          // Creation is server-global, so an attached client may own it. The
+          // TUI plugin separately reports the root selected in this pane.
+          reportedRootSessionID = sessionID
+          break
+        case "session.updated":
+          if (sessionID && sessionID !== reportedRootSessionID) {
+            await reportSession(sessionID)
+          }
+          break
+        case "session.status": {
+          const state = stateFromSessionStatus(properties.status)
+          if (state) {
+            await reportState(state, sessionID)
+          } else {
+            await reportSession(sessionID)
+          }
+          break
+        }
+        case "tool.execute.before":
+        case "tool.execute.after":
+        case "permission.replied":
+        case "question.replied":
+        case "question.rejected":
+        case "session.compacted":
+          await reportState("working", sessionID)
+          break
+        case "permission.asked":
+        case "question.asked":
+        case "session.error":
+          await reportState("blocked", sessionID)
+          break
+        case "session.idle":
+          await reportState("idle", sessionID)
+          break
+        case "session.deleted":
+          break
+        default:
+          break
+      }
+    }
+  },
+}

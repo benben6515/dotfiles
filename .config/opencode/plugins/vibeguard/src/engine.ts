@@ -1,6 +1,28 @@
-function subtractCovered(start, end, covered) {
+import type { PatternSet } from "./patterns.ts"
+
+export interface Span {
+  start: number
+  end: number
+}
+
+interface FoundMatch {
+  start: number
+  end: number
+  original: string
+  category: string
+}
+
+export interface PlannedMatch extends FoundMatch {
+  placeholder?: string
+}
+
+export interface RedactSession {
+  getOrCreatePlaceholder(original: string, category: string): string
+}
+
+function subtractCovered(start: number, end: number, covered: Span[]): Span[] {
   if (start >= end) return []
-  const out = []
+  const out: Span[] = []
   let cur = start
   for (const c of covered) {
     if (c.end <= cur) continue
@@ -16,7 +38,7 @@ function subtractCovered(start, end, covered) {
   return out
 }
 
-function insertCovered(covered, span) {
+function insertCovered(covered: Span[], span: Span): Span[] {
   if (span.start >= span.end) return covered
   let i = 0
   for (; i < covered.length; i++) {
@@ -25,7 +47,7 @@ function insertCovered(covered, span) {
   covered.splice(i, 0, span)
   if (covered.length <= 1) return covered
 
-  const merged = []
+  const merged: Span[] = []
   for (const c of covered) {
     const last = merged.at(-1)
     if (!last) {
@@ -44,15 +66,12 @@ function insertCovered(covered, span) {
 /**
  * 对输入文本进行脱敏替换，返回替换后的文本与命中信息。
  * 设计与 VibeGuard 的 redact 引擎一致：处理重叠命中，确保不会把占位符切碎。
- * @param {string} input
- * @param {{ keywords: Array<{value:string,category:string}>, regex: Array<{pattern:string,flags:string,category:string}>, exclude: Set<string> }} patterns
- * @param {{ getOrCreatePlaceholder(original: string, category: string): string }} session
  */
-export function redactText(input, patterns, session) {
+export function redactText(input: unknown, patterns: PatternSet, session: RedactSession): { text: string; matches: PlannedMatch[] } {
   const text = String(input ?? "")
   if (!text) return { text, matches: [] }
 
-  const found = []
+  const found: FoundMatch[] = []
 
   for (const rule of patterns.keywords) {
     const needle = rule.value
@@ -93,8 +112,8 @@ export function redactText(input, patterns, session) {
     return b.end - a.end
   })
 
-  const planned = []
-  let covered = []
+  const planned: PlannedMatch[] = []
+  let covered: Span[] = []
   for (const m of found) {
     const segments = subtractCovered(m.start, m.end, covered)
     for (const seg of segments) {
@@ -120,4 +139,3 @@ export function redactText(input, patterns, session) {
 
   return { text: out, matches: planned }
 }
-

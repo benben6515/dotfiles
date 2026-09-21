@@ -14,30 +14,28 @@
 // Reuses the upstream src/ modules unchanged (config, patterns, session,
 // engine, deep, restore). No-op when no vibeguard.config.json is found or
 // enabled=false, same as upstream.
-//
-// V2 mapping notes (vs V1):
-//   - experimental.chat.messages.transform -> session.hook("context", ...) and
-//     sibling request kinds. Message shape may differ between versions, so
-//     redaction walks the structure generically instead of assuming
-//     {info, parts} nesting.
-//   - experimental.text.complete -> no V2 equivalent; replaced by the
-//     http.response stream transform. Limitation: the persisted transcript
-//     keeps placeholders (a privacy plus), live output is restored.
 
-import { loadConfig } from "./src/config.js"
-import { buildPatternSet } from "./src/patterns.js"
-import { PlaceholderSession } from "./src/session.js"
-import { redactText } from "./src/engine.js"
-import { redactDeep, restoreDeep } from "./src/deep.js"
-import { restoreText } from "./src/restore.js"
+import { loadConfig, type VibeGuardConfig } from "./src/config.ts"
+import { buildPatternSet, type PatternSet } from "./src/patterns.ts"
+import { PlaceholderSession } from "./src/session.ts"
+import { redactText, type RedactSession } from "./src/engine.ts"
+import { redactDeep, restoreDeep } from "./src/deep.ts"
+import { restoreText, type RestoreSession } from "./src/restore.ts"
 
 // Longest placeholder we generate: "__VG_" + category + "_" + 12 hex + "__".
 // Keep generous headroom; shortens output latency by one chunk at worst.
 const STREAM_HOLD_CHARS = 64
 
+type AnyRecord = Record<string, any>
+
 // Generic walker: redact text/reasoning parts and tool states wherever they
 // appear in the message structure, without assuming a specific schema.
-function redactNode(node, patterns, session, stats) {
+function redactNode(
+  node: AnyRecord | any[] | null | undefined,
+  patterns: PatternSet,
+  session: RedactSession,
+  stats: { changed: number },
+): void {
   if (!node || typeof node !== "object") return
   if (Array.isArray(node)) {
     for (const item of node) redactNode(item, patterns, session, stats)
@@ -77,9 +75,13 @@ function redactNode(node, patterns, session, stats) {
 // Restore placeholders in a provider response body. SSE bodies are streamed
 // through with a small holdback window so placeholders split across chunk
 // boundaries still resolve; other bodies are buffered.
-function restoreResponseBody(body, session, isStream) {
+function restoreResponseBody(
+  body: any,
+  session: RestoreSession,
+  isStream: boolean,
+): any {
   if (!isStream) {
-    return body.then == null ? body : body.then((text) => restoreText(String(text), session))
+    return body.then == null ? body : body.then((text: unknown) => restoreText(String(text), session))
   }
 
   const decoder = new TextDecoder()
@@ -87,14 +89,14 @@ function restoreResponseBody(body, session, isStream) {
   let carry = ""
   return body.pipeThrough(
     new TransformStream({
-      transform(chunk, controller) {
+      transform(chunk: Uint8Array, controller: TransformStreamDefaultController<Uint8Array>) {
         carry += decoder.decode(chunk, { stream: true })
         if (carry.length <= STREAM_HOLD_CHARS) return
         const emit = carry.slice(0, -STREAM_HOLD_CHARS)
         carry = carry.slice(-STREAM_HOLD_CHARS)
         controller.enqueue(encoder.encode(restoreText(emit, session)))
       },
-      flush(controller) {
+      flush(controller: TransformStreamDefaultController<Uint8Array>) {
         carry += decoder.decode()
         if (carry) controller.enqueue(encoder.encode(restoreText(carry, session)))
       },
@@ -104,9 +106,9 @@ function restoreResponseBody(body, session, isStream) {
 
 export default {
   id: "vibeguard",
-  async setup(ctx) {
+  async setup(ctx: any) {
     const directory = ctx.location?.directory ?? process.cwd()
-    const config = await loadConfig(directory)
+    const config: VibeGuardConfig = await loadConfig(directory)
     const debug = Boolean(process.env.OPENCODE_VIBEGUARD_DEBUG) || Boolean(config.debug)
 
     if (debug) {
@@ -116,9 +118,9 @@ export default {
     if (!config.enabled) return
 
     const patterns = buildPatternSet(config.patterns)
-    const sessions = new Map()
+    const sessions = new Map<string, PlaceholderSession>()
 
-    const getSession = (sessionID) => {
+    const getSession = (sessionID: unknown): PlaceholderSession => {
       const key = String(sessionID ?? "") || "__default__"
       const existing = sessions.get(key)
       if (existing) return existing
@@ -131,7 +133,7 @@ export default {
       return created
     }
 
-    const redactMessages = (event) => {
+    const redactMessages = (event: AnyRecord | null | undefined) => {
       if (!event || !Array.isArray(event.messages) || event.messages.length === 0) return
       const session = getSession(event.sessionID)
       session.cleanup()
@@ -149,7 +151,7 @@ export default {
     }
 
     // Restore placeholders coming back from the provider (live output).
-    await ctx.session.hook("http.response", (event) => {
+    await ctx.session.hook("http.response", (event: AnyRecord | null | undefined) => {
       const response = event?.response
       if (!response || !response.body) return
       const session = getSession(event.sessionID)
@@ -169,7 +171,7 @@ export default {
     // opencode V2 passes tool input as a frozen object; mutating it throws
     // "Attempted to assign to readonly property". restoreDeep is pure, so
     // replace event.input wholesale instead of writing into it.
-    await ctx.tool.hook("execute.before", (event) => {
+    await ctx.tool.hook("execute.before", (event: AnyRecord | null | undefined) => {
       const session = getSession(event?.sessionID)
       session.cleanup()
       if (event?.input && typeof event.input === "object") {

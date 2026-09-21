@@ -6,16 +6,22 @@
 // - Injects per-turn reinforcement into the system prompt
 //
 // Bun ESM module; loads the existing security-hardened helpers from
-// caveman-config.js via createRequire so the symlink-safe flag-write code
-// lives in one place. Same trick loads caveman-parse.js (#602) so the mode-
+// caveman-config.cjs via createRequire so the symlink-safe flag-write code
+// lives in one place. Same trick loads caveman-parse.cjs (#602) so the mode-
 // change parsing is a single shared source with caveman-mode-tracker.js.
 //
 // Layout once installed:
 //   ~/.config/opencode/plugins/caveman/
 //   ├── package.json
-//   ├── plugin.js              ← this file
+//   ├── plugin.ts              ← this file
 //   ├── caveman-config.cjs     ← copied sibling of src/hooks/caveman-config.js
 //   └── caveman-parse.cjs      ← copied sibling of src/hooks/caveman-parse.js
+//
+// The .cjs siblings stay CommonJS on purpose: this plugin cannot require()
+// or import() them inside opencode's compiled Bun binary, so they are read
+// from disk and evaluated through new Function(...) as CJS source. Turning
+// them into TypeScript would put type syntax through that eval path and
+// break the load.
 //
 // The always-on caveman ruleset is provided separately via
 // ~/.config/opencode/AGENTS.md (Tier-3 base). This plugin handles dynamic
@@ -44,7 +50,7 @@ import path from 'node:path';
 
 const here = dirname(fileURLToPath(import.meta.url));
 
-// When installed: caveman-config.cjs sits next to plugin.js (copied by
+// When installed: caveman-config.cjs sits next to plugin.ts (copied by
 // bin/install.js, renamed to .cjs because this directory's package.json
 // declares "type": "module" — bare .js would be loaded as ESM). When loaded
 // from the source tree (tests, dev): fall back to the canonical
@@ -58,13 +64,10 @@ const here = dirname(fileURLToPath(import.meta.url));
 // both silently break the plugin (#418 follow-up). createRequire() still
 // resolves node BUILT-INS fine in the compiled binary, which is all
 // caveman-config needs (fs/path/os).
-function loadConfig() {
-  const installed = join(here, 'caveman-config.cjs');
-  const dev = join(here, '..', '..', 'hooks', 'caveman-config.js');
-  const target = existsSync(installed) ? installed : dev;
+function loadCjsModule(target: string): any {
   const code = readFileSync(target, 'utf8').replace(/^#![^\n]*\n/, '');
-  const mod = { exports: {} };
-  // Base require on the loaded file, not plugin.js — caveman-parse.js does a
+  const mod = { exports: {} as Record<string, any> };
+  // Base require on the loaded file, not plugin.ts — caveman-parse.cjs does a
   // relative require('./caveman-config') that must resolve against src/hooks/
   // in the dev layout and against pluginDir when installed.
   new Function('module', 'exports', 'require', '__dirname', '__filename', code)(
@@ -72,11 +75,18 @@ function loadConfig() {
   );
   return mod.exports;
 }
-const config = loadConfig();
+
+function resolveCjsSibling(installedName: string, devRel: string): string {
+  const installed = join(here, installedName);
+  const dev = join(here, '..', '..', 'hooks', devRel);
+  return existsSync(installed) ? installed : dev;
+}
+
+const config = loadCjsModule(resolveCjsSibling('caveman-config.cjs', 'caveman-config.js'));
 
 const { getDefaultMode, safeWriteFlag, readFlag } = config;
 
-// Resolved defensively, NOT destructured with the three above. loadConfig()
+// Resolved defensively, NOT destructured with the three above. loadCjsModule
 // reads whatever caveman-config.cjs sits in the installed plugin directory,
 // which can predate this file (#848). recordModeChange is the newest of these
 // exports, and handleSessionCreated() runs at factory time below, outside any
@@ -84,29 +94,21 @@ const { getDefaultMode, safeWriteFlag, readFlag } = config;
 // and take caveman on opencode from "mode works, history missing" to "plugin
 // does not load at all". The history log is best-effort by design (its own
 // body silent-fails), so the no-op stub is the honest fallback.
-const recordModeChange = config.recordModeChange || function () {};
+const recordModeChange: (dir: string, mode: string | null, sessionId?: string) => void =
+  config.recordModeChange || function () {};
 
-// Load the shared mode-change parser (#602) the same way loadConfig() loads
-// caveman-config.js — see the doc comment above loadConfig() for why this
-// can't go through require()/import() in a compiled Bun binary.
-function loadParse() {
-  const installed = join(here, 'caveman-parse.cjs');
-  const dev = join(here, '..', '..', 'hooks', 'caveman-parse.js');
-  const target = existsSync(installed) ? installed : dev;
-  const code = readFileSync(target, 'utf8').replace(/^#![^\n]*\n/, '');
-  const mod = { exports: {} };
-  new Function('module', 'exports', 'require', '__dirname', '__filename', code)(
-    mod, mod.exports, createRequire(pathToFileURL(target).href), dirname(target), target
-  );
-  return mod.exports;
-}
-const { parseModeChange, INDEPENDENT_MODES } = loadParse();
+// Load the shared mode-change parser (#602) the same way caveman-config.cjs
+// is loaded — see the doc comment above for why this can't go through
+// require()/import() in a compiled Bun binary.
+const { parseModeChange, INDEPENDENT_MODES } = loadCjsModule(
+  resolveCjsSibling('caveman-parse.cjs', 'caveman-parse.js')
+);
 
 // opencode resolves its config dir from $XDG_CONFIG_HOME, else ~/.config/opencode
 // on every platform — including Windows, where it uses %USERPROFILE%\.config\opencode
 // (NOT %APPDATA%). os.homedir() is %USERPROFILE% on win32, so the default branch
 // is already correct cross-platform.
-function opencodeConfigDir() {
+function opencodeConfigDir(): string {
   if (process.env.XDG_CONFIG_HOME) {
     return path.join(process.env.XDG_CONFIG_HOME, 'opencode');
   }
@@ -116,21 +118,21 @@ function opencodeConfigDir() {
 const opencodeDir = opencodeConfigDir();
 const flagPath = path.join(opencodeDir, '.caveman-active');
 
-function removeFlag() {
+function removeFlag(): void {
   try {
     unlinkSync(flagPath);
-  } catch (error) {
+  } catch (error: any) {
     if (process.env.CAVEMAN_DEBUG === '1' && error.code !== 'ENOENT') {
       console.error(`caveman: failed to remove flag ${flagPath}: ${error.message}`);
     }
   }
 }
 
-function reinforcementBanner(mode) {
+function reinforcementBanner(mode: string): string {
   return 'CAVEMAN MODE ACTIVE (' + mode + ') — session ruleset applies.';
 }
 
-function escapeRegExp(str) {
+function escapeRegExp(str: string): string {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
@@ -145,7 +147,7 @@ const staleBlock = new RegExp(
 // SKILL.md is the single source of truth for caveman behavior, filtered to the
 // active level the same way caveman-activate.js and caveman-mode-tracker.js do.
 // The filter itself is NOT re-implemented here: it lives in caveman-config.js,
-// which loadConfig() already evaluates, so all three loaders share one copy of
+// which loadCjsModule already evaluates, so all three loaders share one copy of
 // the intensity-table parsing. A local copy here is the exact drift risk
 // CLAUDE.md's "keep it in caveman-config.js" rule exists to prevent — SKILL.md's
 // table format would then have two parsers to keep in step.
@@ -155,7 +157,7 @@ const staleBlock = new RegExp(
 // still holds a pre-#975 copy gets a config without these exports, and the
 // stand-ins below degrade to the banner alone rather than throwing inside a
 // system-prompt hook.
-function loadFilteredRuleset(mode) {
+function loadFilteredRuleset(mode: string): string | null {
   if (typeof config.loadFilteredRuleset !== 'function') return null;
   // The shared loader probes <base>/../../skills and <base>/../skills. opencode
   // has no CLAUDE_PLUGIN_ROOT equivalent and two layouts to cover, so it is
@@ -169,7 +171,7 @@ function loadFilteredRuleset(mode) {
   return null;
 }
 
-function reinforcementLine(mode) {
+function reinforcementLine(mode: string): string {
   const banner = reinforcementBanner(mode);
   const ruleset = loadFilteredRuleset(mode);
   // No SKILL.md reachable (a standalone hook install without the skills
@@ -178,7 +180,7 @@ function reinforcementLine(mode) {
   return ruleset ? banner + '\n\n' + ruleset : banner;
 }
 
-function applyModeChange(change) {
+function applyModeChange(change: { action: string; mode?: string } | null): void {
   if (!change) return;
   if (change.action === 'clear') {
     recordModeChange(opencodeDir, null);
@@ -194,7 +196,7 @@ function applyModeChange(change) {
 // Session-start logic — extracted so the `event` dispatcher (opencode >= 1.15)
 // drives one shared implementation. Re-fires on every `session.created` event,
 // so a new session in a long-lived plugin process re-asserts the flag.
-function handleSessionCreated() {
+function handleSessionCreated(): void {
   const mode = getDefaultMode();
   if (mode === 'off') {
     recordModeChange(opencodeDir, null);
@@ -214,7 +216,7 @@ function handleSessionCreated() {
 // strings.
 export const CavemanPlugin = {
   id: 'caveman',
-  async setup(ctx) {
+  async setup(ctx: any) {
   // Assert the flag at setup as well: in one-shot `opencode run` the
   // first session.created publishes before plugin event dispatch is wired,
   // so the event handler alone misses it. The setup-time write covers that
@@ -222,7 +224,7 @@ export const CavemanPlugin = {
   // TUI processes.
   handleSessionCreated();
 
-  await ctx.session.hook('prompt', (event) => {
+  await ctx.session.hook('prompt', (event: any) => {
     // Detect /caveman commands and natural-language mode toggles in the
     // admitted prompt text. Return value is ignored — state changes happen
     // via the flag file.
@@ -258,7 +260,7 @@ export const CavemanPlugin = {
   // end of part text: `line` carries the ruleset appended after the banner,
   // and that content is always the last thing this hook writes into an
   // entry, so replacing from the banner on is safe.
-  await ctx.session.hook('context', (event) => {
+  await ctx.session.hook('context', (event: any) => {
     if (!event || !Array.isArray(event.system)) return;
     const active = readFlag(flagPath);
     if (active && !INDEPENDENT_MODES.has(active)) {

@@ -1,6 +1,6 @@
 import { createHmac, randomBytes } from "node:crypto"
 
-function sanitizeCategory(input) {
+function sanitizeCategory(input: unknown): string {
   const raw = String(input ?? "").trim()
   if (!raw) return "TEXT"
   const upper = raw.toUpperCase()
@@ -9,8 +9,15 @@ function sanitizeCategory(input) {
   return safe
 }
 
-function toHexLower(buffer) {
+function toHexLower(buffer: Uint8Array): string {
   return Buffer.from(buffer).toString("hex")
+}
+
+export interface PlaceholderSessionOptions {
+  prefix: string
+  ttlMs: number
+  maxMappings: number
+  secret?: Uint8Array
 }
 
 /**
@@ -20,25 +27,27 @@ function toHexLower(buffer) {
  * - 维护 placeholder <-> original 的双向映射，用于工具执行前还原
  */
 export class PlaceholderSession {
-  /**
-   * @param {{ prefix: string, ttlMs: number, maxMappings: number, secret?: Uint8Array }} options
-   */
-  constructor(options) {
-    const prefix = String(options?.prefix ?? "__VG_")
-    this.prefix = prefix
+  prefix: string
+  ttlMs: number
+  maxMappings: number
+  secret: Uint8Array
+
+  forward: Map<string, string>
+  reverse: Map<string, string>
+  created: Map<string, number>
+
+  constructor(options?: Partial<PlaceholderSessionOptions>) {
+    this.prefix = String(options?.prefix ?? "__VG_")
     this.ttlMs = Number.isFinite(options?.ttlMs) ? Number(options.ttlMs) : 60 * 60 * 1000
     this.maxMappings = Number.isFinite(options?.maxMappings) ? Number(options.maxMappings) : 100000
     this.secret = options?.secret ? Uint8Array.from(options.secret) : randomBytes(32)
 
-    /** @type {Map<string,string>} */
     this.forward = new Map()
-    /** @type {Map<string,string>} */
     this.reverse = new Map()
-    /** @type {Map<string,number>} */
     this.created = new Map()
   }
 
-  cleanup(now = Date.now()) {
+  cleanup(now: number = Date.now()): void {
     if (!Number.isFinite(this.ttlMs) || this.ttlMs <= 0) return
     for (const [placeholder, createdAt] of this.created.entries()) {
       if (now - createdAt <= this.ttlMs) continue
@@ -49,7 +58,7 @@ export class PlaceholderSession {
     }
   }
 
-  evictOldest() {
+  evictOldest(): void {
     let oldestPlaceholder = ""
     let oldestTime = Infinity
     for (const [placeholder, createdAt] of this.created.entries()) {
@@ -64,20 +73,18 @@ export class PlaceholderSession {
     if (original !== undefined) this.reverse.delete(original)
   }
 
-  lookup(placeholder) {
+  lookup(placeholder: string): string | undefined {
     return this.forward.get(placeholder)
   }
 
-  lookupReverse(original) {
+  lookupReverse(original: string): string | undefined {
     return this.reverse.get(original)
   }
 
   /**
    * 与 VibeGuard 一致：placeholder = `${prefix}${CATEGORY}_${hash12}__`
-   * @param {string} original
-   * @param {string} category
    */
-  generatePlaceholder(original, category) {
+  generatePlaceholder(original: string, category: unknown): string {
     const cat = sanitizeCategory(category)
     const h = createHmac("sha256", this.secret)
     h.update(String(original))
@@ -90,10 +97,8 @@ export class PlaceholderSession {
   /**
    * 获取或创建占位符，并注册映射。
    * 设计目标：同一会话内，同一 original 始终映射到同一 placeholder。
-   * @param {string} original
-   * @param {string} category
    */
-  getOrCreatePlaceholder(original, category) {
+  getOrCreatePlaceholder(original: string, category: unknown): string {
     const existing = this.lookupReverse(original)
     if (existing) return existing
 
@@ -139,7 +144,7 @@ export class PlaceholderSession {
   }
 }
 
-export function getPlaceholderRegex(prefix) {
+export function getPlaceholderRegex(prefix: unknown): RegExp {
   const escaped = String(prefix).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
   // Pattern: __VG_CATEGORY_HASH12__ or __VG_CATEGORY_HASH12_N__
   return new RegExp(`${escaped}[A-Za-z0-9_]+_[a-f0-9A-F]{12}(?:_\\d+)?__`, "g")

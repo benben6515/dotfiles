@@ -110,20 +110,23 @@ async function highStakesScore(
   }
 }
 
-export const JevGate = async ({ directory }: { directory: string }) => {
-  return {
-    "tool.execute.before": async (
-      input: { tool: string },
-      output: { args: { command?: string } },
-    ) => {
-      if (input.tool !== "bash") return
-      const cmd = String(output.args.command ?? "")
+// Ported to the OpenCode V2 plugin API (default export with id + setup,
+// ctx.tool.hook("execute.before") replaces the V1 hook key).
+export default {
+  id: "jev-gate",
+  async setup(ctx: { location: { directory: string } }) {
+    await ctx.tool.hook("execute.before", async (event: {
+      tool?: string
+      input?: Record<string, unknown>
+    }) => {
+      if (String(event?.tool ?? "") !== "bash") return
+      const cmd = String(event?.input?.command ?? "")
       if (!RISKY.test(cmd)) return
       // Prefer the tool call's own working dir: the session may run in a
-      // linked worktree, while `directory` is the project root the plugin
+      // linked worktree, while the plugin's location is the project root it
       // loaded with — the diff summary must come from where the command
       // will actually run.
-      const cwd = String(output.args.workdir ?? directory)
+      const cwd = String(event?.input?.workdir ?? ctx.location.directory)
       try {
         const st = statSync(ALLOW_FILE)
         if (Date.now() - st.mtimeMs < ALLOW_WINDOW_MS) {
@@ -146,6 +149,6 @@ export const JevGate = async ({ directory }: { directory: string }) => {
           `（放行方式見 ~/ai/loop/NOTE.md 的 jev-gate 段，或由使用者在自己終端執行該指令）。`,
         )
       }
-    },
-  }
+    })
+  },
 }

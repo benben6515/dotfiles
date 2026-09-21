@@ -1,4 +1,21 @@
-function sanitizeCategory(input) {
+export interface KeywordRule {
+  value: string
+  category: string
+}
+
+export interface RegexRule {
+  pattern: string
+  flags: string
+  category: string
+}
+
+export interface PatternSet {
+  keywords: KeywordRule[]
+  regex: RegexRule[]
+  exclude: Set<string>
+}
+
+function sanitizeCategory(input: unknown): string {
   const raw = String(input ?? "").trim()
   if (!raw) return "TEXT"
   const upper = raw.toUpperCase()
@@ -9,10 +26,8 @@ function sanitizeCategory(input) {
 
 /**
  * 将 Go 风格的 `(?i)` / `(?m)` 前缀做一个轻量兼容（仅处理“开头连续出现”的情况）。
- * @param {string} pattern
- * @param {string} flags
  */
-function peelInlineFlags(pattern, flags) {
+function peelInlineFlags(pattern: unknown, flags: unknown): { pattern: string; flags: string } {
   let p = String(pattern ?? "")
   let f = String(flags ?? "")
 
@@ -37,7 +52,7 @@ function peelInlineFlags(pattern, flags) {
  * 内置规则：从 VibeGuard 的 builtin 规则移植（做了 JS 兼容调整）。
  * 目标是“低配置成本 + 尽量覆盖”，不追求 100% 精准。
  */
-const BUILTIN = new Map([
+const BUILTIN = new Map<string, RegexRule>([
   [
     "email",
     {
@@ -90,8 +105,8 @@ const BUILTIN = new Map([
   ],
 ])
 
-export function buildPatternSet(patterns) {
-  const raw = patterns && typeof patterns === "object" ? patterns : {}
+export function buildPatternSet(patterns: unknown): PatternSet {
+  const raw = patterns && typeof patterns === "object" ? (patterns as Record<string, unknown>) : {}
 
   const keywords = Array.isArray(raw.keywords) ? raw.keywords : []
   const regex = Array.isArray(raw.regex) ? raw.regex : []
@@ -99,23 +114,25 @@ export function buildPatternSet(patterns) {
   const exclude = Array.isArray(raw.exclude) ? raw.exclude : []
 
   const keywordRules = keywords
-    .map((x) => {
+    .map((x): KeywordRule | null => {
       if (!x || typeof x !== "object") return null
-      const value = String(x.value ?? "").trim()
+      const item = x as Record<string, unknown>
+      const value = String(item.value ?? "").trim()
       if (!value) return null
-      const category = sanitizeCategory(x.category)
+      const category = sanitizeCategory(item.category)
       return { value, category }
     })
-    .filter(Boolean)
+    .filter((x): x is KeywordRule => x !== null)
 
-  const regexRules = []
+  const regexRules: RegexRule[] = []
 
   for (const x of regex) {
     if (!x || typeof x !== "object") continue
-    const pattern = String(x.pattern ?? "").trim()
+    const item = x as Record<string, unknown>
+    const pattern = String(item.pattern ?? "").trim()
     if (!pattern) continue
-    const category = sanitizeCategory(x.category)
-    const flags = typeof x.flags === "string" ? x.flags : ""
+    const category = sanitizeCategory(item.category)
+    const flags = typeof item.flags === "string" ? item.flags : ""
     const peeled = peelInlineFlags(pattern, flags)
     regexRules.push({ pattern: peeled.pattern, flags: peeled.flags, category })
   }
@@ -136,4 +153,3 @@ export function buildPatternSet(patterns) {
     exclude: excludeSet,
   }
 }
-

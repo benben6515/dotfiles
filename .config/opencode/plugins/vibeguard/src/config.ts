@@ -3,16 +3,35 @@ import * as fs from "node:fs/promises"
 import os from "node:os"
 import path from "node:path"
 
-function parseDurationMs(input) {
+export interface RawPatterns {
+  keywords?: unknown[]
+  regex?: unknown[]
+  builtin?: unknown[]
+  exclude?: unknown[]
+}
+
+export interface VibeGuardConfig {
+  enabled: boolean
+  debug: boolean
+  prefix: string
+  ttlMs: number
+  maxMappings: number
+  patterns: RawPatterns
+  loadedFrom: string
+}
+
+const DEFAULT_TTL_MS = 60 * 60 * 1000
+
+function parseDurationMs(input: unknown): number {
   const raw = String(input ?? "").trim()
-  if (!raw) return 60 * 60 * 1000
+  if (!raw) return DEFAULT_TTL_MS
 
   const m = raw.match(/^(\d+(?:\.\d+)?)(ms|s|m|h|d)$/)
-  if (!m) return 60 * 60 * 1000
+  if (!m) return DEFAULT_TTL_MS
 
   const value = Number(m[1])
   const unit = m[2]
-  if (!Number.isFinite(value) || value < 0) return 60 * 60 * 1000
+  if (!Number.isFinite(value) || value < 0) return DEFAULT_TTL_MS
 
   if (unit === "ms") return value
   if (unit === "s") return value * 1000
@@ -20,18 +39,18 @@ function parseDurationMs(input) {
   if (unit === "h") return value * 60 * 60 * 1000
   if (unit === "d") return value * 24 * 60 * 60 * 1000
 
-  return 60 * 60 * 1000
+  return DEFAULT_TTL_MS
 }
 
-function readJson(filepath) {
+function readJson(filepath: string): Promise<any> {
   return fs
     .readFile(filepath, "utf8")
     .then((s) => JSON.parse(s))
     .catch(() => null)
 }
 
-function normalizeConfig(raw) {
-  const cfg = raw && typeof raw === "object" ? raw : {}
+function normalizeConfig(raw: unknown) {
+  const cfg = raw && typeof raw === "object" ? (raw as Record<string, any>) : {}
 
   const enabled = Boolean(cfg.enabled)
   const debug = Boolean(cfg.debug)
@@ -42,7 +61,7 @@ function normalizeConfig(raw) {
   const maxMappings =
     Number.isFinite(session.max_mappings) && Number(session.max_mappings) > 0 ? Number(session.max_mappings) : 100000
 
-  const patterns = cfg.patterns && typeof cfg.patterns === "object" ? cfg.patterns : {}
+  const patterns = cfg.patterns && typeof cfg.patterns === "object" ? (cfg.patterns as RawPatterns) : {}
 
   return {
     enabled,
@@ -54,7 +73,7 @@ function normalizeConfig(raw) {
   }
 }
 
-export function getConfigCandidates(directory) {
+export function getConfigCandidates(directory: unknown): string[] {
   const dir = String(directory ?? process.cwd())
   const home = os.homedir()
   const globalConfig = path.join(home, ".config", "opencode", "vibeguard.config.json")
@@ -72,7 +91,7 @@ export function getConfigCandidates(directory) {
  * - 找不到配置或解析失败：返回 enabled=false（插件 no-op）
  * - 只做轻量校验，避免引入额外依赖
  */
-export async function loadConfig(directory) {
+export async function loadConfig(directory: unknown): Promise<VibeGuardConfig> {
   const candidates = getConfigCandidates(directory)
   for (const file of candidates) {
     if (!file) continue
