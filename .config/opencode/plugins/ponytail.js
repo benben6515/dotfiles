@@ -1,0 +1,1 @@
+/Users/benbenweng/ai/skills/vendor/ponytail/.opencode/plugins/ponytail.mjs

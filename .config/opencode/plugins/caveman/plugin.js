@@ -1,0 +1,288 @@
+// caveman — opencode plugin
+//
+// Provides dynamic caveman mode tracking for opencode:
+// - Writes the mode flag on each session start (via the `event` dispatcher)
+// - Parses user messages for /caveman commands and natural-language toggles
+// - Injects per-turn reinforcement into the system prompt
+//
+// Bun ESM module; loads the existing security-hardened helpers from
+// caveman-config.js via createRequire so the symlink-safe flag-write code
+// lives in one place. Same trick loads caveman-parse.js (#602) so the mode-
+// change parsing is a single shared source with caveman-mode-tracker.js.
+//
+// Layout once installed:
+//   ~/.config/opencode/plugins/caveman/
+//   ├── package.json
+//   ├── plugin.js              ← this file
+//   ├── caveman-config.cjs     ← copied sibling of src/hooks/caveman-config.js
+//   └── caveman-parse.cjs      ← copied sibling of src/hooks/caveman-parse.js
+//
+// The always-on caveman ruleset is provided separately via
+// ~/.config/opencode/AGENTS.md (Tier-3 base). This plugin handles dynamic
+// state only: flag writes, slash-command parsing, natural-language
+// activation, and per-turn reinforcement.
+//
+// Hook mapping (opencode >= 1.15.x):
+//   - event (event.type === 'session.created'): session-init flag write,
+//     re-fires per session rather than once per plugin-process load
+//   - chat.message: intercept user prompts for mode changes
+//   - experimental.chat.system.transform: inject reinforcement per-turn
+//
+// Note: opencode does NOT support 'session.created' or 'tui.prompt.append'
+// as named plugin-hook keys. 'session.created' is an event *type* dispatched
+// through the single `event` handler; the old direct-key handlers were
+// silently ignored. See:
+// https://github.com/JuliusBrussee/caveman/issues/418
+// https://github.com/JuliusBrussee/caveman/issues/421
+
+import { createRequire } from 'node:module';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { dirname, join } from 'node:path';
+import { existsSync, unlinkSync, readFileSync } from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+
+const here = dirname(fileURLToPath(import.meta.url));
+
+// When installed: caveman-config.cjs sits next to plugin.js (copied by
+// bin/install.js, renamed to .cjs because this directory's package.json
+// declares "type": "module" — bare .js would be loaded as ESM). When loaded
+// from the source tree (tests, dev): fall back to the canonical
+// src/hooks/caveman-config.js, which lives in a directory whose own
+// package.json pins "type": "commonjs". One source of truth either way.
+//
+// Loaded by evaluating the file as CommonJS by hand, NOT via the module
+// loader: opencode runs plugins inside a compiled Bun binary where
+// require() of on-disk files is rejected ("require() async module is
+// unsupported") and await import() of a CJS file yields an empty namespace —
+// both silently break the plugin (#418 follow-up). createRequire() still
+// resolves node BUILT-INS fine in the compiled binary, which is all
+// caveman-config needs (fs/path/os).
+function loadConfig() {
+  const installed = join(here, 'caveman-config.cjs');
+  const dev = join(here, '..', '..', 'hooks', 'caveman-config.js');
+  const target = existsSync(installed) ? installed : dev;
+  const code = readFileSync(target, 'utf8').replace(/^#![^\n]*\n/, '');
+  const mod = { exports: {} };
+  // Base require on the loaded file, not plugin.js — caveman-parse.js does a
+  // relative require('./caveman-config') that must resolve against src/hooks/
+  // in the dev layout and against pluginDir when installed.
+  new Function('module', 'exports', 'require', '__dirname', '__filename', code)(
+    mod, mod.exports, createRequire(pathToFileURL(target).href), dirname(target), target
+  );
+  return mod.exports;
+}
+const config = loadConfig();
+
+const { getDefaultMode, safeWriteFlag, readFlag } = config;
+
+// Resolved defensively, NOT destructured with the three above. loadConfig()
+// reads whatever caveman-config.cjs sits in the installed plugin directory,
+// which can predate this file (#848). recordModeChange is the newest of these
+// exports, and handleSessionCreated() runs at factory time below, outside any
+// try — so destructuring an absent one would throw during plugin construction
+// and take caveman on opencode from "mode works, history missing" to "plugin
+// does not load at all". The history log is best-effort by design (its own
+// body silent-fails), so the no-op stub is the honest fallback.
+const recordModeChange = config.recordModeChange || function () {};
+
+// Load the shared mode-change parser (#602) the same way loadConfig() loads
+// caveman-config.js — see the doc comment above loadConfig() for why this
+// can't go through require()/import() in a compiled Bun binary.
+function loadParse() {
+  const installed = join(here, 'caveman-parse.cjs');
+  const dev = join(here, '..', '..', 'hooks', 'caveman-parse.js');
+  const target = existsSync(installed) ? installed : dev;
+  const code = readFileSync(target, 'utf8').replace(/^#![^\n]*\n/, '');
+  const mod = { exports: {} };
+  new Function('module', 'exports', 'require', '__dirname', '__filename', code)(
+    mod, mod.exports, createRequire(pathToFileURL(target).href), dirname(target), target
+  );
+  return mod.exports;
+}
+const { parseModeChange, INDEPENDENT_MODES } = loadParse();
+
+// opencode resolves its config dir from $XDG_CONFIG_HOME, else ~/.config/opencode
+// on every platform — including Windows, where it uses %USERPROFILE%\.config\opencode
+// (NOT %APPDATA%). os.homedir() is %USERPROFILE% on win32, so the default branch
+// is already correct cross-platform.
+function opencodeConfigDir() {
+  if (process.env.XDG_CONFIG_HOME) {
+    return path.join(process.env.XDG_CONFIG_HOME, 'opencode');
+  }
+  return path.join(os.homedir(), '.config', 'opencode');
+}
+
+const opencodeDir = opencodeConfigDir();
+const flagPath = path.join(opencodeDir, '.caveman-active');
+
+function removeFlag() {
+  try {
+    unlinkSync(flagPath);
+  } catch (error) {
+    if (process.env.CAVEMAN_DEBUG === '1' && error.code !== 'ENOENT') {
+      console.error(`caveman: failed to remove flag ${flagPath}: ${error.message}`);
+    }
+  }
+}
+
+function reinforcementBanner(mode) {
+  return 'CAVEMAN MODE ACTIVE (' + mode + ') — session ruleset applies.';
+}
+
+function escapeRegExp(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+// Derived from reinforcementBanner() itself (split on a sentinel) rather than
+// re-spelling the banner text as a second regex literal: one source of truth,
+// and it stays in sync if the wording above ever changes.
+const [bannerPrefix, bannerSuffix] = reinforcementBanner('\0').split('\0');
+const staleBlock = new RegExp(
+  escapeRegExp(bannerPrefix) + '[a-z-]+' + escapeRegExp(bannerSuffix) + '[\\s\\S]*$'
+);
+
+// SKILL.md is the single source of truth for caveman behavior, filtered to the
+// active level the same way caveman-activate.js and caveman-mode-tracker.js do.
+// The filter itself is NOT re-implemented here: it lives in caveman-config.js,
+// which loadConfig() already evaluates, so all three loaders share one copy of
+// the intensity-table parsing. A local copy here is the exact drift risk
+// CLAUDE.md's "keep it in caveman-config.js" rule exists to prevent — SKILL.md's
+// table format would then have two parsers to keep in step.
+//
+// Resolved off `config` rather than destructured at module scope because the
+// installed caveman-config.cjs is a COPY: a user whose opencode plugin dir
+// still holds a pre-#975 copy gets a config without these exports, and the
+// stand-ins below degrade to the banner alone rather than throwing inside a
+// system-prompt hook.
+function loadFilteredRuleset(mode) {
+  if (typeof config.loadFilteredRuleset !== 'function') return null;
+  // The shared loader probes <base>/../../skills and <base>/../skills. opencode
+  // has no CLAUDE_PLUGIN_ROOT equivalent and two layouts to cover, so it is
+  // called once per base — `here` resolves the installed tree
+  // (~/.config/opencode/plugins/caveman → ~/.config/opencode/skills) and the
+  // parent resolves the dev tree (src/plugins/opencode → repo-root skills).
+  for (const base of [here, join(here, '..')]) {
+    const ruleset = config.loadFilteredRuleset(mode, base);
+    if (ruleset) return ruleset;
+  }
+  return null;
+}
+
+function reinforcementLine(mode) {
+  const banner = reinforcementBanner(mode);
+  const ruleset = loadFilteredRuleset(mode);
+  // No SKILL.md reachable (a standalone hook install without the skills
+  // dir): fall back to the banner alone, the same degrade caveman-activate.js
+  // uses for the same case.
+  return ruleset ? banner + '\n\n' + ruleset : banner;
+}
+
+function applyModeChange(change) {
+  if (!change) return;
+  if (change.action === 'clear') {
+    recordModeChange(opencodeDir, null);
+    removeFlag();
+    return;
+  }
+  if (change.action === 'set' && change.mode) {
+    recordModeChange(opencodeDir, change.mode);
+    safeWriteFlag(flagPath, change.mode);
+  }
+}
+
+// Session-start logic — extracted so the `event` dispatcher (opencode >= 1.15)
+// drives one shared implementation. Re-fires on every `session.created` event,
+// so a new session in a long-lived plugin process re-asserts the flag.
+function handleSessionCreated() {
+  const mode = getDefaultMode();
+  if (mode === 'off') {
+    recordModeChange(opencodeDir, null);
+    removeFlag();
+    return;
+  }
+  recordModeChange(opencodeDir, mode);
+  safeWriteFlag(flagPath, mode);
+}
+
+// V2 plugin shape: default export object with id + setup(ctx).
+// V1 mapping (opencode <= 1.x):
+//   event → ctx.event.subscribe(); chat.message → ctx.session.hook('prompt');
+//   experimental.chat.system.transform → ctx.session.hook('context').
+// The V2 context hook receives system as SystemPart[] ({type:'text',text}),
+// so the stale-banner rewrite below matches on part.text instead of raw
+// strings.
+export const CavemanPlugin = {
+  id: 'caveman',
+  async setup(ctx) {
+  // Assert the flag at setup as well: in one-shot `opencode run` the
+  // first session.created publishes before plugin event dispatch is wired,
+  // so the event handler alone misses it. The setup-time write covers that
+  // race; the event handler re-asserts on every later session in long-lived
+  // TUI processes.
+  handleSessionCreated();
+
+  await ctx.session.hook('prompt', (event) => {
+    // Detect /caveman commands and natural-language mode toggles in the
+    // admitted prompt text. Return value is ignored — state changes happen
+    // via the flag file.
+    // expandedTpl: opencode replaces a typed slash command with its command
+    // file's prose before this hook sees it. unwrapQuotes: the non-interactive
+    // `run` path delivers the message wrapped in literal quote characters.
+    const text = event && event.prompt && event.prompt.text;
+    if (!text) return;
+    const change = parseModeChange(text, { getDefaultMode, expandedTpl: true, unwrapQuotes: true });
+    if (change) applyModeChange(change);
+  });
+
+  // Re-assert the flag on every new session, not just once when the plugin
+  // module loads.
+  const controller = new AbortController();
+  void (async () => {
+    try {
+      for await (const event of ctx.event.subscribe({ signal: controller.signal })) {
+        if (event && event.type === 'session.created') handleSessionCreated();
+      }
+    } catch (error) {}
+  })();
+  const disposeEvents = () => controller.abort();
+
+  // Inject the reinforcement line into the system prompt when caveman is
+  // active. opencode calls this before every LLM request; the V2 context
+  // hook mutates event.system (SystemPart[] of {type:'text',text}).
+  // Idempotent: opencode is expected to rebuild `system` per request, but if
+  // it ever reuses the array across turns an unguarded append grows the
+  // system prompt without bound — silently eating the context window.
+  // Rewrite any block we already left instead of stacking another, so a mode
+  // switch updates in place rather than accumulating. staleBlock matches to
+  // end of part text: `line` carries the ruleset appended after the banner,
+  // and that content is always the last thing this hook writes into an
+  // entry, so replacing from the banner on is safe.
+  await ctx.session.hook('context', (event) => {
+    if (!event || !Array.isArray(event.system)) return;
+    const active = readFlag(flagPath);
+    if (active && !INDEPENDENT_MODES.has(active)) {
+      const line = reinforcementLine(active);
+      let found = false;
+      for (let i = 0; i < event.system.length; i++) {
+        const part = event.system[i];
+        if (part && typeof part.text === 'string' && staleBlock.test(part.text)) {
+          part.text = part.text.replace(staleBlock, line);
+          found = true;
+        }
+      }
+      if (found) return;
+      const last = event.system[event.system.length - 1];
+      if (last && typeof last.text === 'string') {
+        last.text += '\n\n' + line;
+      } else {
+        event.system.push({ type: 'text', text: line });
+      }
+    }
+  });
+
+  return disposeEvents;
+  },
+};
+
+export default CavemanPlugin;
