@@ -7,7 +7,7 @@
 // Known ceiling: classification sees only the new prompt, not conversation
 // history — a longer continuation like "把 refactor 做完" can misdirect.
 // ponytail: upgrade path = append last assistant message snippet to state.
-import { readFileSync } from 'node:fs';
+import { appendFileSync, readFileSync } from 'node:fs';
 
 const ZEN_URL = 'https://opencode.ai/zen/v1/systemone';
 const MODEL_JEV = 'jev-1.13';
@@ -38,6 +38,17 @@ function hasImage(files?: ReadonlyArray<Record<string, unknown>>): boolean {
 
 type ModelRef = { providerID: string; id: string };
 
+// Jev failure log — the hook fails open silently, so outages are only
+// visible here. Grow unbounded; small lines, check rarely.
+function logErr(msg: string): void {
+  try {
+    appendFileSync(
+      `${process.env.HOME}/.local/share/loop/jev-route.log`,
+      `${new Date().toISOString()} ${msg}\n`,
+    );
+  } catch {}
+}
+
 // Tier keywords accepted by /pin. Anything else containing "/" is parsed as
 // "provider/model" verbatim.
 function resolveTier(arg: string): ModelRef | undefined {
@@ -50,8 +61,9 @@ function resolveTier(arg: string): ModelRef | undefined {
   return undefined;
 }
 
+// Key source is ONLY the key file. OPENCODE_API_KEY is off-limits: opencode
+// injects its own unrelated key into that name, which 401s against Zen.
 function apiKey(): string {
-  if (process.env.OPENCODE_API_KEY) return process.env.OPENCODE_API_KEY;
   try {
     return readFileSync(KEY_FILE, 'utf8').trim();
   } catch {
@@ -88,7 +100,10 @@ async function pickModel(promptText: string): Promise<{ providerID: string; id: 
       }),
       signal: AbortSignal.timeout(TIMEOUT_MS),
     });
-    if (!res.ok) return undefined;
+    if (!res.ok) {
+      logErr(`HTTP ${res.status} from ${ZEN_URL}`);
+      return undefined;
+    }
     const data = (await res.json()) as { answers?: { tier?: { choice?: string } } };
     switch (data.answers?.tier?.choice) {
       case 'light':
@@ -98,9 +113,11 @@ async function pickModel(promptText: string): Promise<{ providerID: string; id: 
       case 'fast':
         return FAST;
       default:
+        logErr(`unexpected Jev answer: ${JSON.stringify(data).slice(0, 200)}`);
         return undefined;
     }
-  } catch {
+  } catch (e) {
+    logErr(e instanceof Error ? e.message : String(e));
     return undefined;
   }
 }
