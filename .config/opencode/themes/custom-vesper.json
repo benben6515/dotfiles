@@ -1,30 +1,50 @@
 {
   "$schema": "https://opencode.ai/theme.json",
-  "version": 2,
-  "dark": {
+  "base": {
+    "categorical": ["orange", "green", "red", "cyan", "purple"],
     "text": {
-      "default": "#FFFFFF",
-      "subdued": "#A0A0A0",
+      "base": "#FFFFFF",
+      "muted": "#A0A0A0",
+      "action": {
+        "primary": { "base": "#FFC799" },
+        "secondary": { "base": "#A0A0A0" },
+        "destructive": { "base": "#FF8080" }
+      },
+      "formfield": {
+        "base": "#FFFFFF",
+        "$hovered": "#FFC799",
+        "$focused": "#FFC799",
+        "$pressed": "#FFC799"
+      },
       "feedback": {
-        "error": { "default": "#FF8080" },
-        "warning": { "default": "#FFC799" },
-        "success": { "default": "#99FFE4" },
-        "info": { "default": "#FFC799" }
+        "error": { "base": "#FF8080" },
+        "warning": { "base": "#FFC799" },
+        "success": { "base": "#99FFE4" },
+        "info": { "base": "#FFC799" }
       }
     },
     "background": {
-      "default": "transparent",
-      "surface": {
-        "offset": "transparent",
-        "overlay": "transparent"
+      "base": "transparent",
+      "raised": {
+        "base": "transparent",
+        "high": "transparent",
+        "max": "transparent"
+      },
+      "action": {
+        "primary": { "base": "transparent" },
+        "secondary": { "base": "transparent" },
+        "destructive": { "base": "transparent" }
+      },
+      "formfield": { "base": "$background.base" },
+      "feedback": {
+        "error": { "base": "$background.base" },
+        "warning": { "base": "$background.base" },
+        "success": { "base": "$background.base" },
+        "info": { "base": "$background.base" }
       }
     },
-    "border": {
-      "default": "#282828"
-    },
-    "scrollbar": {
-      "default": "#282828"
-    },
+    "border": { "base": "#282828" },
+    "scrollbar": { "base": "#282828" },
     "diff": {
       "text": {
         "added": "#99FFE4",
@@ -49,6 +69,17 @@
         }
       }
     },
+    "syntax": {
+      "comment": "#8B8B8B",
+      "keyword": "#A0A0A0",
+      "function": "#FFC799",
+      "variable": "#FFFFFF",
+      "string": "#99FFE4",
+      "number": "#FFC799",
+      "type": "#FFC799",
+      "operator": "#A0A0A0",
+      "punctuation": "#FFFFFF"
+    },
     "markdown": {
       "text": "#FFFFFF",
       "heading": "#FFC799",
@@ -65,16 +96,63 @@
       "imageText": "#A0A0A0",
       "codeBlock": "#FFFFFF"
     },
-    "syntax": {
-      "comment": "#8B8B8B",
-      "keyword": "#A0A0A0",
-      "function": "#FFC799",
-      "variable": "#FFFFFF",
-      "string": "#99FFE4",
-      "number": "#FFC799",
-      "type": "#FFC799",
-      "operator": "#A0A0A0",
-      "punctuation": "#FFFFFF"
+    "@dialog": {
+      "background": { "base": "$background.raised.base" }
+    }
+  },
+  "dark": {
+    "hue": {
+      "gray": {
+        "100": "#F5F5F5",
+        "200": "#D9D9D9",
+        "300": "#A0A0A0",
+        "400": "#8B8B8B",
+        "500": "#65737E",
+        "600": "#4E4E4E",
+        "700": "#282828",
+        "800": "#181818",
+        "900": "#101010"
+      },
+      "red": {
+        "100": "#FFC9C9",
+        "200": "#FF8080",
+        "300": "#E66A6A",
+        "400": "#CC5252",
+        "500": "#B33A3A",
+        "600": "#8C2B2B",
+        "700": "#661F1F",
+        "800": "#401212",
+        "900": "#200808"
+      },
+      "orange": {
+        "100": "#FFE8D1",
+        "200": "#FFC799",
+        "300": "#E6AC72",
+        "400": "#CC9450",
+        "500": "#B37D38",
+        "600": "#8C6128",
+        "700": "#66461C",
+        "800": "#402B10",
+        "900": "#201608"
+      },
+      "yellow": "$hue.orange",
+      "green": {
+        "100": "#DBFFF3",
+        "200": "#99FFE4",
+        "300": "#73D9BF",
+        "400": "#52B39B",
+        "500": "#3D8C77",
+        "600": "#2C6B59",
+        "700": "#1E4A3C",
+        "800": "#122B23",
+        "900": "#091612"
+      },
+      "cyan": "$hue.green",
+      "blue": "$hue.gray",
+      "purple": "$hue.orange",
+      "accent": "$hue.orange",
+      "interactive": "$hue.orange",
+      "neutral": "$hue.gray"
     }
   }
 }
