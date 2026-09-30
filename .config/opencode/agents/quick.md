@@ -1,5 +1,5 @@
 ---
-description: 快速問答主 agent，無 shell、無 skill
+description: Quick Q&A primary agent. No shell, no skills.
 mode: primary
 permissions:
   - action: skill

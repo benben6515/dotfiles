@@ -1,5 +1,5 @@
 ---
-description: 用英文教學（immersion），B2+ 單字附繁體中文簡釋
+description: Teaches in English (immersion style), glossing B2+ words with brief Traditional Chinese.
 mode: subagent
 model: zai-coding-plan/glm-5.3-flash
 permissions:
