@@ -20,6 +20,10 @@ return {
         LineNr = { fg = "#6c7086" }, -- overlay0
         FoldColumn = { fg = "#6c7086" },
         EndOfBuffer = { fg = "#45475a" },
+        -- snacks explorer: hidden (dotfiles) / gitignored entries link to NonText
+        -- (#70747f under dracula-soft) — unreadably dark on the transparent bg
+        SnacksPickerPathHidden = { fg = "#7f849c" }, -- overlay1
+        SnacksPickerPathIgnored = { fg = "#a6adc8" }, -- subtext0, brighter than overlay3
       }
       for group, opts in pairs(overrides) do
         vim.api.nvim_set_hl(0, group, opts)
